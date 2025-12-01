@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="../logo.jpg" type="image/jpeg" />
+    <title>장기 stockfish fen</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <nav style="background-color: #343a40; padding: 10px 20px; color: white; display: flex; justify-content: space-between; align-items: center;">
+      <a href="/" style="color: white; text-decoration: none; font-weight: bold; font-size: 1.2em;">&lt; 홈으로</a>
+      <span style="font-size: 1.2em;">장기 FEN 변환기</span>
+    </nav>
+    <div class="container">
+      <h1>장기 stockfish fen</h1>
+      <div class="editor-container">
+        <div class="board-container">
+          <div id="janggi-board" class="janggi-board"></div>
+        </div>
+
+        <div class="pieces-palette">
+          <h3>한(Han) 기물</h3>
+          <div class="palette-pieces han-pieces">
+            <div class="palette-piece" data-piece="K">
+              <img src="images/han_gung.png" alt="한 궁" />
+            </div>
+            <div class="palette-piece" data-piece="R">
+              <img src="images/han_cha.png" alt="한 차" />
+            </div>
+            <div class="palette-piece" data-piece="B">
+              <img src="images/han_sang.png" alt="한 상" />
+            </div>
+            <div class="palette-piece" data-piece="N">
+              <img src="images/han_ma.png" alt="한 마" />
+            </div>
+            <div class="palette-piece" data-piece="A">
+              <img src="images/han_sa.png" alt="한 사" />
+            </div>
+            <div class="palette-piece" data-piece="C">
+              <img src="images/han_fo.png" alt="한 포" />
+            </div>
+            <div class="palette-piece" data-piece="P">
+              <img src="images/han_b.png" alt="한 병" />
+            </div>
+          </div>
+
+          <h3>초(Cho) 기물</h3>
+          <div class="palette-pieces cho-pieces">
+            <div class="palette-piece" data-piece="k">
+              <img src="images/cho_gung.png" alt="초 궁" />
+            </div>
+            <div class="palette-piece" data-piece="r">
+              <img src="images/cho_cha.png" alt="초 차" />
+            </div>
+            <div class="palette-piece" data-piece="b">
+              <img src="images/cho_sang.png" alt="초 상" />
+            </div>
+            <div class="palette-piece" data-piece="n">
+              <img src="images/cho_ma.png" alt="초 마" />
+            </div>
+            <div class="palette-piece" data-piece="a">
+              <img src="images/cho_sa.png" alt="초 사" />
+            </div>
+            <div class="palette-piece" data-piece="c">
+              <img src="images/cho_fo.png" alt="초 포" />
+            </div>
+            <div class="palette-piece" data-piece="p">
+              <img src="images/cho_jol.png" alt="초 졸" />
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="clear-board">판 비우기</button>
+            <button id="initial-position">초기 위치</button>
+            <button id="remove-piece">기물 제거</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="fen-container">
+        <h3>FEN 형식</h3>
+        <textarea id="fen-text" rows="3" cols="50" readonly></textarea>
+        <div class="fen-controls">
+          <button id="copy-fen">FEN 복사</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/janggi.js"></script>
+  </body>
+</html>
