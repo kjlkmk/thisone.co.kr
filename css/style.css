@@ -103,3 +103,8 @@ section h2::after {
     background-color: #343a40; /* Dark background for footer */
     color: white;
 }
+
+/* Enhancing logo visibility on dark navbar */
+.navbar-brand img {
+    filter: invert(100%);
+}
