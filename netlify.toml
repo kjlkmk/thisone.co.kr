@@ -1,0 +1,3 @@
+[build]
+  command = "bundle config set path '/opt/build/cache/bundle' && bundle install && bundle exec jekyll build"
+  publish = "_site"
