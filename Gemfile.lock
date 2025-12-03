@@ -87,6 +87,7 @@ PLATFORMS
   x64-mingw-ucrt
 
 DEPENDENCIES
+  bundler (~> 2.0)
   http_parser.rb (~> 0.6.0)
   jekyll (~> 4.4.1)
   jekyll-feed (~> 0.12)
@@ -138,4 +139,4 @@ CHECKSUMS
   webrick (1.9.2) sha256=beb4a15fc474defed24a3bda4ffd88a490d517c9e4e6118c3edce59e45864131
 
 BUNDLED WITH
-  4.0.0
+   2.7.2
