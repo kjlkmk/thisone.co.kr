@@ -1,0 +1,64 @@
+---
+# This empty front matter is required for Jekyll to process this file.
+---
+
+// Import Google Fonts
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
+// Override Minima's default variables
+
+// Typography
+$base-font-family: "Noto Sans KR", sans-serif;
+$base-font-size:   17px;
+$base-font-weight: 400;
+$small-font-size:  $base-font-size * 0.875;
+$base-line-height: 1.7;
+
+// Colors
+$text-color:       #333;
+$background-color: #fdfdfd;
+$brand-color:      #007bff; // A modern blue
+
+$grey-color:       #828282;
+$grey-color-light: #e0e0e0;
+$grey-color-dark:  #555;
+
+// Import the main Minima stylesheet
+@import "minima";
+
+// Add your custom styles below
+
+// A subtle shadow for the site header
+.site-header {
+  border-top: 5px solid $brand-color;
+  border-bottom: 1px solid $grey-color-light;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+// Prettier links
+a {
+  transition: color 0.2s ease-in-out;
+  &:hover {
+    color: darken($brand-color, 10%);
+    text-decoration: none;
+  }
+}
+
+// Style for post meta info
+.post-meta {
+  font-size: $small-font-size;
+  color: $grey-color;
+}
+
+// Better spacing for posts
+.post-content {
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 2.5em;
+    margin-bottom: 1em;
+  }
+}
+
+// Invert the header logo color to make it visible on a dark background
+.navbar-brand img {
+  filter: invert(1);
+}

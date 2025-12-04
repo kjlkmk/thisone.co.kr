@@ -12,8 +12,9 @@
 <meta name="msapplication-TileColor" content="#da532c">
 <meta name="theme-color" content="#ffffff">
 <link rel="icon" href="/favicon.ico" />
-            <title>장기 FEN 변환기 및 편집 도구</title>
+            <title>장기 FEN 변환기</title>
             <meta name="description" content="장기(Janggi) 기보나 특정 상황을 FEN(Forsyth-Edwards Notation) 문자열로 손쉽게 변환하고 편집하세요. 장기판 위에서 기물을 직접 배치하고 FEN 코드를 생성하거나 복사할 수 있는 웹 도구입니다.">
+            <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
             <link rel="stylesheet" href="css/style.css" />
             
             <!-- Bootstrap CSS CDN -->
@@ -29,41 +30,10 @@
               gtag('config', 'G-MS57JQS903');
             </script>
         </head>  <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <img src="/img/thisone_logo_128_53.png" alt="thisone.co.kr logo" height="40" class="d-inline-block align-text-top">
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">홈</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="/janggi/">장기 도구</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/#projects">프로젝트</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/blog/">블로그</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/#about">소개</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/contact/">문의하기</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    
     <div class="container">
-      <h1>장기 FEN 변환기 및 편집 도구</h1>
-      <p class="lead">이 도구의 자세한 사용법과 FEN에 대한 설명은 <a href="/blog/posts/janggi-fen-guide.html">완벽 가이드를 확인하세요.</a></p>
+      <h1>장기 FEN 변환기</h1>
+      <br>
       <div class="editor-container">
         <div class="board-container">
           <div id="janggi-board" class="janggi-board"></div>
