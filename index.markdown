@@ -3,6 +3,8 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: home
+title: thisone.co.kr - 개발 블로그 및 포트폴리오
+description: 개인 프로젝트, 특히 배달 및 퀵서비스 업무 효율화와 관련된 개발 기록을 공유하는 블로그입니다.
 ---
 
 <div class="container my-5">
