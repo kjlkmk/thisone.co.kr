@@ -21,7 +21,7 @@
 title: thisone.co.kr - 블로그
 email: your-email@example.com
 description: >- # this means to ignore newlines until "baseurl:"
-  thisone.co.kr의 블로그입니다. 다양한 주제의 글을 만나보세요.
+  개인 프로젝트, 특히 배달 및 퀵서비스 업무 효율화와 관련된 개발 기록을 공유하는 블로그입니다.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://thisone.co.kr"
 twitter_username: jekyllrb
@@ -32,6 +32,7 @@ theme: minima
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
+  - jekyll-sitemap
 
 # Exclude from processing.
 # The following items will not be processed, by default.
