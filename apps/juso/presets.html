@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>프리셋 동 목록</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { padding: 20px; background-color: #f8f9fa; }
+        .container { max-width: 800px; }
+        .panel { background: #fff; padding: 25px; margin-bottom: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .preset-item { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; background-color: #fafafa; }
+        .preset-item h5 { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <nav class="text-center mb-4">
+        <a href="index.html" class="btn btn-outline-secondary">🏠 주소 분석 도구</a>
+        <a href="manage.html" class="btn btn-outline-secondary ml-2">⚙️ 동 관리</a>
+        <a href="instructions.html" class="btn btn-outline-info ml-2">📜 사용 설명서</a>
+    </nav>
+
+    <div class="panel">
+        <h2 class="text-center mb-4">✨ 프리셋 동 목록 관리</h2>
+        <p class="text-center text-muted mb-4">자주 사용하는 동 목록을 저장하고 관리하세요. 제목과 동 목록을 수정하고 저장할 수 있습니다.</p>
+
+        <div id="preset-list">
+            <!-- Presets will be loaded here by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="presets.js?v=1.1"></script> <!-- JavaScript for presets.html -->
+</body>
+</html>

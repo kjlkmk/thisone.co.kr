@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>주소 분석 도구</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { padding: 20px; background-color: #f8f9fa; }
+        .container { max-width: 800px; }
+        .panel { background: #fff; padding: 25px; margin-bottom: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .city-list { max-height: 250px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; background-color: #fafafa; }
+        .result-box { padding: 15px; margin-top: 15px; border-radius: 8px; white-space: pre-wrap; font-family: monospace; }
+        .result-box h5 { font-weight: bold; }
+        .unique-box { background-color: #e9f7ef; border: 1px solid #d1e7dd; }
+        .duplicate-box { background-color: #fff8e1; border: 1px solid #ffecb3; }
+        .invalid-box { background-color: #fdeeee; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <nav class="text-center mb-4">
+        <a href="manage.html" class="btn btn-outline-secondary">⚙️ 동 관리</a>
+        <a href="presets.html" class="btn btn-outline-secondary ml-2">✨ 프리셋 관리</a>
+        <a href="instructions.html" class="btn btn-outline-info ml-2">📜 사용 설명서</a>
+    </nav>
+
+    <div class="panel">
+        <h2 class="text-center mb-4">🏙️ 도시 선택 → 동 목록 추출</h2>
+        <form id="city-selection-form">
+            <div class="form-group city-list mb-3" id="city-checkboxes">
+                <!-- City checkboxes will be loaded here by JavaScript -->
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="truncate_to_two_chars">
+                <label class="form-check-label" for="truncate_to_two_chars">2글자</label>
+            </div>
+            <button type="button" id="get-dongs-btn" class="btn btn-info btn-block">동 목록 가져오기</button>
+            <div id="city-dong-list-output" class="mt-3" style="display:none;">
+                <strong>총 <span id="city-dong-count">0</span>개 동</strong>
+                <button type="button" class="btn btn-success btn-sm ml-2" onclick="copyToClipboard(document.getElementById('city-dong-list-text').innerText)">📋 복사</button>
+                <div class="result-box p-2 bg-light rounded border mt-2" id="city-dong-list-text"></div>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel">
+        <h2 class="text-center mb-4">📍 동 이름 분석기</h2>
+        <p class="text-center text-muted mb-4">위에서 가져온 동 목록을 분석하거나, 직접 입력하여 중복 및 존재 여부를 확인하세요.</p>
+        <form id="dong-analysis-form">
+            <div class="form-group">
+                <textarea id="dong_input_textarea" class="form-control" rows="8" placeholder="예: 갈현동, 신사동, 역삼동, 없는동, ..."></textarea>
+            </div>
+            <div class="d-flex justify-content-between">
+                <button type="button" id="analyze-dongs-btn" class="btn btn-primary flex-grow-1 mr-2">🔍 분석하기</button>
+                <button type="button" id="reset-btn" class="btn btn-secondary">🔄 초기화</button>
+            </div>
+        </form>
+    </div>
+
+
+
+    <div id="analysis-results" style="display:none;">
+        <div class="panel">
+            <h3 class="text-center mb-4">📊 분석 보고서</h3>
+            <div class="result-box unique-box">
+                <h5>✅ 고유한 동 (바로 사용 가능)</h5>
+                <p class="text-muted small">이 동들은 하나의 도시에만 존재하여, 복사해서 바로 사용하셔도 안전합니다.</p>
+                <div id="unique-dongs-output"></div>
+            </div>
+            <div class="result-box duplicate-box mt-3">
+                <h5>⚠️ 중복된 동 (주의 필요!)</h5>
+                <p class="text-muted small">이 동들은 여러 도시에 존재하므로, 앱에서 원하지 않는 알림이 올 수 있습니다.</p>
+                <div id="duplicate-dongs-output"></div>
+            </div>
+            <div class="result-box invalid-box mt-3">
+                <h5>❌ 존재하지 않는 동 (오타 확인)</h5>
+                <p class="text-muted small">데이터베이스에 없는 동 이름입니다. 오타가 있는지 확인해 보세요.</p>
+                <div id="invalid-dongs-output"></div>
+            </div>
+            <div class="result-box mt-3">
+                <h5>📋 제외지 만들기 (복사하여 사용)</h5>
+                <p class="text-muted small">중복된 동에서 검색된 모든 제외지 동들을 모아놓은 목록입니다. 퀵서비스 앱의 제외지 기능에 활용할 수 있습니다.</p>
+                <div id="combined-exclude-dongs-output"></div>
+            </div>
+            <div class="result-box unique-box mt-3">
+                <h5>✅ 최종 도시 목록 (간소화)</h5>
+                <p class="text-muted small">입력된 동들을 기반으로 추론된 최종 도시 목록입니다.</p>
+                <div id="final-simplified-cities-output" class="p-2 bg-white rounded border"></div>
+                <button type="button" class="btn btn-success btn-sm mt-2" onclick="copyToClipboard(document.getElementById('final-simplified-cities-output').innerText)">📋 복사</button>
+            </div>
+            <div class="result-box duplicate-box mt-3">
+                <h5>🚫 탈락 도시 목록 (간소화)</h5>
+                <p class="text-muted small">모호한 동 이름으로 인해 추론 과정에서 제외된 도시 목록입니다.</p>
+                <div id="final-eliminated-cities-output" class="p-2 bg-white rounded border"></div>
+                <button type="button" class="btn btn-warning btn-sm mt-2" onclick="copyToClipboard(document.getElementById('final-eliminated-cities-output').innerText)">📋 복사</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="app.js?v=1.2"></script> <!-- Our main application logic -->
+</body>
+</html>

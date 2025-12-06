@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>동 관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { padding: 20px; background-color: #f4f6fa; }
+        .panel { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; }
+        .card-header button { text-decoration: none; color: #333; width: 100%; text-align: left; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <nav class="text-center mb-4">
+        <a href="index.html" class="btn btn-outline-secondary">🏠 주소 분석 도구</a>
+        <a href="presets.html" class="btn btn-outline-secondary ml-2">✨ 프리셋 관리</a>
+        <a href="instructions.html" class="btn btn-outline-info ml-2">📜 사용 설명서</a>
+    </nav>
+    <h2>동(Dong) 관리 페이지</h2>
+
+    <div class="panel">
+        <h3>새로운 동 추가</h3>
+        <form id="add-dong-form" class="form-inline">
+            <select name="city_id" id="add-dong-city-select" class="form-control mr-2" required>
+                <option value="">도시 선택</option>
+                <!-- Cities will be loaded here by JavaScript -->
+            </select>
+            <input type="text" name="dong_name" id="add-dong-name-input" class="form-control mr-2" placeholder="동 이름 입력" required>
+            <button type="submit" class="btn btn-primary">추가</button>
+        </form>
+    </div>
+
+    <div class="panel">
+        <h3>도시별 동 목록 (클릭하여 보기)</h3>
+        <div id="accordion">
+            <!-- Dongs by city will be loaded here by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="manage.js?v=1.1"></script> <!-- JavaScript for manage.html -->
+</body>
+</html>

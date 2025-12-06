@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>사용 설명서</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { padding: 20px; background-color: #f4f6fa; }
+        .panel { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <nav class="text-center mb-4">
+        <a href="index.html" class="btn btn-outline-secondary">🏠 주소 분석 도구</a>
+        <a href="manage.html" class="btn btn-outline-secondary ml-2">⚙️ 동 관리</a>
+        <a href="presets.html" class="btn btn-outline-secondary ml-2">✨ 프리셋 관리</a>
+    </nav>
+
+    <div class="panel">
+        <h2>📜 주소 도구상자 사용 설명서</h2>
+        <p>이 도구는 한국의 주소(도시, 동) 데이터를 쉽게 다룰 수 있도록 도와주는 웹 애플리케이션입니다.</p>
+    </div>
+
+    <div class="panel">
+        <h3>🏠 주소 분석 도구 (메인 페이지)</h3>
+        <p>이 페이지는 퀵서비스 앱의 도착지 입력 시 발생하는 동 이름 중복 문제를 해결하고, 주소 데이터를 효율적으로 관리할 수 있도록 돕습니다.</p>
+
+        <h4>🏙️ 도시 선택 → 동 목록 추출</h4>
+        <p>원하는 도시들을 체크박스에서 선택한 후 <code>동 목록 가져오기</code> 버튼을 누르면, 해당 도시들에 속한 모든 동의 목록이 쉼표(,)로 구분되어 나타납니다. 결과 옆의 <code>📋 복사</code> 버튼으로 목록을 쉽게 복사할 수 있습니다. 추출된 동 목록은 아래 <strong>동 이름 분석기</strong> 입력창에 자동으로 채워집니다.</p>
+
+        <h4>📍 동 이름 분석기</h4>
+        <p>위에서 가져온 동 목록을 분석하거나, 직접 동 이름을 쉼표(,)로 구분하여 입력한 후 <code>🔍 분석하기</code> 버튼을 누르세요. 입력된 동 이름과 유사한 모든 동들을 데이터베이스에서 찾아 분석 보고서를 생성합니다.</p>
+        <ul>
+            <li><strong><code>🔄 초기화</code> 버튼:</strong> 입력창의 내용을 지우고 분석 결과를 초기 상태로 되돌립니다.</li>
+        </ul>
+
+        <h4>📊 분석 보고서</h4>
+        <p>분석 결과는 세 가지 카테고리로 분류되어 표시됩니다.</p>
+        <ul>
+            <li><strong>✅ 고유한 동 (바로 사용 가능):</strong> 하나의 도시에만 존재하는 동들입니다. <code>📋 전체 복사</code> 버튼으로 목록을 쉽게 복사하여 퀵서비스 앱에 사용하세요.</li>
+            <li><strong>⚠️ 중복된 동 (주의 필요!):</strong> 여러 도시에 존재하는 동들입니다. 각 동 옆에는 해당 동이 속한 도시와 그 도시에서의 정확한 동 이름이 표시됩니다.
+                <ul>
+                    <li><strong><code>🚫 제외지 복사</code> 버튼:</strong> 입력한 동 이름과 다르게 검색된 동 이름들(예: '포동' 입력 시 '영등포동')을 쉼표(,)로 구분하여 복사합니다. 이 목록을 퀵서비스 앱의 '제외지' 기능에 활용하여 원치 않는 배차 알림을 줄일 수 있습니다.</li>
+                </ul>
+            </li>
+        </ul>
+        <h4 class="mt-4">🔄 동 이름으로 도시 추론 (Reverse Lookup)</h4>
+        <ul>
+            <li><strong>✅ 최종 도시 목록 (간소화):</strong> 입력된 동들을 기반으로 추론된 최종 도시 목록입니다. 여러 도시에 존재하는 동의 경우, 다른 동들과의 빈도를 고려하여 가장 적합하다고 판단되는 도시가 선택됩니다. <code>📋 복사</code> 버튼으로 목록을 쉽게 복사할 수 있습니다.</li>
+            <li><strong>🚫 탈락 도시 목록 (간소화):</strong> 모호한 동 이름으로 인해 도시 추론 과정에서 제외된 도시 목록입니다. 예를 들어, '갈현동'이 서울과 과천에 모두 존재하고, 다른 입력 동들이 서울에 더 많이 속해 서울 '갈현동'이 최종 선택되었다면, 과천은 탈락 도시 목록에 포함될 수 있습니다. <code>📋 복사</code> 버튼으로 목록을 쉽게 복사할 수 있습니다.</li>
+        </ul>
+    </div>
+
+    <div class="panel">
+        <h3>퀵서비스 앱에서 중복된 동 처리 전략</h3>
+        <p>퀵서비스 앱의 도착지 입력 시, 동일한 동 이름이 여러 도시에 존재하여 원치 않는 배차가 뜨는 문제를 해결하기 위한 전략입니다.</p>
+
+        <h4>✅ 고유한 동 (바로 사용 가능)</h4>
+        <p>주소 분석기에서 <strong>'고유한 동'</strong>으로 분류된 동들은 하나의 도시에만 존재하므로, 퀵서비스 앱의 도착지 목록에 안전하게 추가하여 사용하시면 됩니다.</p>
+
+        <h4>⚠️ 중복된 동 (주의 필요!)</h4>
+        <p>주소 분석기에서 <strong>'중복된 동'</strong>으로 분류된 동들은 여러 도시에 존재합니다. 이 동들을 퀵서비스 앱에 입력할 경우, 원치 않는 지역의 배차가 함께 뜰 수 있습니다. 다음 전략 중 하나를 선택하여 활용하세요.</p>
+        <ul>
+            <li><strong>수동 필터링을 감수하고 입력:</strong> 원하는 지역의 배차를 놓치지 않기 위해 해당 동을 입력하고, 원치 않는 배차가 뜰 때마다 수동으로 '취소' 버튼을 누릅니다. 원하는 배차가 자주 뜨고 원치 않는 배차가 드물 때 유용합니다.</li>
+            <li><strong>문제의 중복 동은 아예 입력하지 않기:</strong> 원치 않는 배차로 인한 번거로움을 피하기 위해 해당 동은 퀵서비스 앱 도착지 목록에 아예 추가하지 않습니다. 이 경우, 원하는 지역의 배차도 자동으로 뜨지 않으므로 다른 방법으로 배차를 확인해야 할 수 있습니다. 원치 않는 배차가 너무 자주 뜨거나 수동 취소가 번거로울 때 고려할 수 있습니다.</li>
+        </ul>
+
+        <h4>❌ 존재하지 않는 동 (오타 확인)</h4>
+        <p>데이터베이스에 없는 동 이름입니다. 오타가 있는지 확인하거나, 필요한 경우 동 관리 페이지에서 추가해야 합니다.</p>
+
+        <h4>'제외지' 기능 활용 시 주의사항</h4>
+        <p>퀵서비스 앱의 '제외지' 기능은 특정 동을 완전히 차단하는 기능입니다. 만약 '제외지'에 '갈현동'을 추가하면, '과천시 갈현동'이든 '은평구 갈현동'이든 모든 '갈현동' 배차가 차단됩니다. 따라서, 특정 '갈현동'은 원하고 다른 '갈현동'은 원치 않는 상황에서는 '제외지'를 사용할 수 없습니다. '제외지'는 오직 <strong>"나는 이 동은 어떤 경우에도 절대 가고 싶지 않다"</strong>는 경우에만 효과적입니다.</p>
+    </div>
+
+    <div class="panel">
+        <h3>동(Dong) 관리 페이지</h3>
+        <p>이 페이지에서는 데이터베이스에 저장된 동 정보를 직접 추가, 수정, 삭제할 수 있습니다.</p>
+
+        <h4>새로운 동 추가</h4>
+        <p><code>도시 선택</code> 드롭다운에서 동을 추가할 도시를 선택하고, <code>동 이름 입력</code> 필드에 이름을 적은 뒤 <code>추가</code> 버튼을 누르면 새로운 동이 데이터베이스에 저장됩니다.</p>
+
+        <h4>도시별 동 목록 (수정 및 삭제)</h4>
+        <p>도시 이름을 클릭하면 해당 도시에 속한 동 목록이 펼쳐집니다. 각 동의 오른쪽에는 <code>수정</code>과 <code>삭제</code> 버튼이 있습니다.</p>
+        <ul>
+            <li><strong>수정</strong>: 버튼을 누르면 입력 필드가 나타나며, 새로운 동 이름을 입력하고 <code>저장</code> 버튼을 눌러 수정할 수 있습니다.</li>
+            <li><strong>삭제</strong>: 버튼을 누르면 확인 창이 나타나고, 확인 시 해당 동이 데이터베이스에서 영구적으로 삭제됩니다.</li>
+        </ul>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -26,5 +26,15 @@ layout: home
       </p>
       <a href="/apps/janggi/" class="btn btn-primary btn-lg">바로가기</a>
     </div>
+
+    <div class="col d-flex flex-column align-items-start gap-2">
+      <h3 class="fw-bold">
+        <a href="/apps/juso/" class="text-decoration-none">주소 분석 도구</a>
+      </h3>
+      <p class="text-muted">
+        퀵서비스 및 배달 기사님들을 위해, 여러 도시에 중복으로 존재하는 동 이름, 존재하지 않는 동 이름 등을 분석하고, 배달 앱에서 활용할 수 있는 제외지 목록을 자동으로 생성해주는 도구입니다.
+      </p>
+      <a href="/apps/juso/" class="btn btn-primary btn-lg">바로가기</a>
+    </div>
   </div>
 </div>
