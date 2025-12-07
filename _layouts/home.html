@@ -37,19 +37,63 @@ layout: default
         </li>
       {% endif %}
 
+      {% comment %} How many pages to show before/after current {% endcomment %}
+      {% assign num_pages_to_show_around_current = 2 %} 
+      {% assign min_page_to_show = paginator.page | minus: num_pages_to_show_around_current %}
+      {% assign max_page_to_show = paginator.page | plus: num_pages_to_show_around_current %}
+
+      {% assign first_ellipsis_shown = false %}
+      {% assign last_ellipsis_shown = false %}
+
       {% for page_num in (1..paginator.total_pages) %}
-        {% if page_num == paginator.page %}
-          <li class="page-item active" aria-current="page">
-            <span class="page-link">{{ page_num }}</span>
-          </li>
+        {% assign should_show_page = false %}
+        
+        {% assign is_current_page = false %}
+        {% if page_num == paginator.page %}{% assign is_current_page = true %}{% endif %}
+        
+        {% assign is_first_page = false %}
+        {% if page_num == 1 %}{% assign is_first_page = true %}{% endif %}
+        
+        {% assign is_last_page = false %}
+        {% if page_num == paginator.total_pages %}{% assign is_last_page = true %}{% endif %}
+        
+        {% if is_first_page or is_last_page or is_current_page %}
+          {% assign should_show_page = true %}
+        {% elsif page_num >= min_page_to_show and page_num <= max_page_to_show %}
+          {% assign should_show_page = true %}
+        {% endif %}
+
+        {% if should_show_page %}
+          {% if is_current_page %}
+            <li class="page-item active" aria-current="page">
+              <span class="page-link">{{ page_num }}</span>
+            </li>
+          {% else %}
+            <li class="page-item">
+              {% if is_first_page %}
+                <a class="page-link" href="{{ '/' | relative_url }}">{{ page_num }}</a>
+              {% else %}
+                <a class="page-link" href="{{ site.baseurl }}/blog/page{{ page_num }}/">{{ page_num }}</a>
+              {% endif %}
+            </li>
+          {% endif %}
         {% else %}
-          <li class="page-item">
-            {% if page_num == 1 %}
-              <a class="page-link" href="{{ '/' | relative_url }}">{{ page_num }}</a>
-            {% else %}
-              <a class="page-link" href="{{ site.baseurl }}/blog/page{{ page_num }}/">{{ page_num }}</a>
-            {% endif %}
-          </li>
+          {% comment %} Render ellipsis {% endcomment %}
+          {% assign needs_first_ellipsis = false %}
+          {% if page_num < paginator.page and first_ellipsis_shown == false and page_num > 1 %}
+            {% assign needs_first_ellipsis = true %}
+          {% endif %}
+
+          {% assign needs_last_ellipsis = false %}
+          {% if page_num > paginator.page and last_ellipsis_shown == false and page_num < paginator.total_pages %}
+            {% assign needs_last_ellipsis = true %}
+          {% endif %}
+          
+          {% if needs_first_ellipsis or needs_last_ellipsis %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% if needs_first_ellipsis %}{% assign first_ellipsis_shown = true %}{% endif %}
+            {% if needs_last_ellipsis %}{% assign last_ellipsis_shown = true %}{% endif %}
+          {% endif %}
         {% endif %}
       {% endfor %}
 
