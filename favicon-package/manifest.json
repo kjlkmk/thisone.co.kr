@@ -1,6 +1,6 @@
 {
-  "name": "Your App Name",
-  "short_name": "App",
+  "name": "This One",
+  "short_name": "ThisOne",
   "icons": [
     {
       "src": "/favicon-16x16.png",
