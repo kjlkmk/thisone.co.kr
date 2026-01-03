@@ -2,7 +2,7 @@
 layout: post
 title: "겁쟁이 거북이, 가장 빠른 기사가 되다"
 date: 2025-12-14
-categories: [life]
+categories: [blog]
 tags: [퀵서비스, 오토바이, 초보, 성장, 배달, 인생]
 author: "thisone"
 excerpt: "겁이 많아 누구보다 느렸지만, 한 번에 하나의 배달만 우직하게 수행하여 역설적으로 가장 빠른 기사로 인정받게 된 20대 퀵서비스 기사의 성장 이야기."

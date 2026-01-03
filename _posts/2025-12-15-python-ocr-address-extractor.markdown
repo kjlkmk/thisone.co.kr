@@ -2,7 +2,7 @@
 layout: post
 title: "Python과 Termux로 스크린샷 주소 자동 추출기 만들기"
 date: 2025-12-15
-categories: [생활코딩]
+categories: [blog]
 tags: [Python, OCR, Termux, Tesseract, 자동화]
 author: "퀵서비스 기사"
 excerpt: "수동 주소 입력의 불편함을 해결하기 위해, 스마트폰 스크린샷에서 자동으로 주소를 인식하여 클립보드에 복사해주는 Python OCR 스크립트 개발기."

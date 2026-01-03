@@ -2,7 +2,7 @@
 layout: post
 title:  "QuickClip - 매일 쓰는 문구를 저장하는 나만의 클립보드"
 date:   2025-12-17
-categories: [업무도구]
+categories: [blog]
 tags: [QuickClip, 업무자동화, 생산성, 클립보드, 웹앱]
 author: "퀵서비스 기사"
 excerpt: "매일 반복해서 입력하는 주소, 계좌번호, 상용구를 클릭 한 번으로 복사할 수 있도록 직접 개발한 웹 도구 QuickClip의 사용법과 활용 사례를 소개합니다."

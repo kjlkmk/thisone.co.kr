@@ -2,7 +2,7 @@
 layout: post
 title: "자동화의 공백, 손가락이 고생한 하루"
 date: 2025-12-15
-categories: [배송일지]
+categories: [blog]
 tags: [자동화, Tasker, Termux, 카카오내비, 업무효율]
 author: "퀵서비스 기사"
 excerpt: "잘 사용하던 자동화 앱을 삭제했더니, 하루 종일 주소 입력에 시달렸다. 결국 퇴근 후 직접 자동화 프로그램을 다시 만들기로 결심한 기록."

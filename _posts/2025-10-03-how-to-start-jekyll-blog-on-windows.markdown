@@ -2,7 +2,7 @@
 layout: post
 title: "Jekyll로 정적 블로그 시작하기: 윈도우(Windows) 설치부터 운영까지"
 date: 2025-10-03
-categories: web-dev
+categories: [blog]
 description: "수동 HTML 관리의 번거로움에서 벗어나 Jekyll을 사용하여 효율적이고 자동화된 블로그를 구축하는 방법을 알아봅니다. 윈도우 환경에서의 Ruby, Jekyll 설치 과정을 포함한 완벽 가이드입니다."
 ---
 
