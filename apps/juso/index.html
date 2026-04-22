@@ -2,8 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>주소 분석 및 배달 제외지 생성 도구 | 퀵서비스</title>
-    <meta name="description" content="배달, 퀵서비스 기사님을 위한 주소 분석 및 제외지 생성 도구입니다. 중복 동 이름 찾기, 도시별 동 목록 추출, 제외지 자동 생성 기능을 통해 업무 효율을 높여보세요.">
+    <title>주소 분석 도구</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
@@ -96,6 +95,51 @@
                 <div id="final-eliminated-cities-output" class="p-2 bg-white rounded border"></div>
                 <button type="button" class="btn btn-warning btn-sm mt-2" onclick="copyToClipboard(document.getElementById('final-eliminated-cities-output').innerText)">📋 복사</button>
             </div>
+            <div class="result-box mt-3" style="background-color: #f0f0f0; border: 1px solid #ccc;">
+                <h5>🚀 최종 통합 제외지 (도시+동)</h5>
+                <p class="text-muted small">탈락된 도시(2글자)와 중복된 동의 제외지들을 모두 합친 최종 목록입니다.</p>
+                <div id="final-combined-exclusion-output" class="p-2 bg-white rounded border"></div>
+                <button type="button" class="btn btn-dark btn-sm mt-2" onclick="copyToClipboard(document.getElementById('final-combined-exclusion-output').innerText)">📋 전체 복사</button>
+            </div>
+            <div class="result-box mt-3" style="background-color: #e3f2fd; border: 1px solid #90caf9;">
+                <h5>🎯 최종 통합 동 목록 (동+도시)</h5>
+                <p class="text-muted small">입력된 동들과 최종 추론된 도시(2글자)를 모두 합친 목록입니다. 앱의 '동 목록'에 바로 사용 가능합니다.</p>
+                <div id="final-combined-dongs-output" class="p-2 bg-white rounded border"></div>
+                <button type="button" class="btn btn-primary btn-sm mt-2" onclick="copyToClipboard(document.getElementById('final-combined-dongs-output').innerText)">📋 전체 복사</button>
+            </div>
+            <div class="result-box mt-3" style="background-color: #fff3e0; border: 1px solid #ffe0b2;">
+                <h5>🧩 최종 통합 제외지 (정규식)</h5>
+                <p class="text-muted small">최종 통합 제외지를 압축된 정규식 패턴으로 변환한 결과입니다.</p>
+                <div id="final-exclusion-regex-output" class="p-2 bg-white rounded border" style="word-break: break-all; font-family: monospace;"></div>
+                <button type="button" class="btn btn-warning btn-sm mt-2" onclick="copyToClipboard(document.getElementById('final-exclusion-regex-output').innerText)">📋 정규식 복사</button>
+            </div>
+            <div class="result-box mt-3" style="background-color: #f1f8e9; border: 1px solid #dcedc8;">
+                <h5>🧩 최종 통합 동 목록 (정규식)</h5>
+                <p class="text-muted small">최종 통합 동 목록을 압축된 정규식 패턴으로 변환한 결과입니다.</p>
+                <div id="final-dongs-regex-output" class="p-2 bg-white rounded border" style="word-break: break-all; font-family: monospace;"></div>
+                <button type="button" class="btn btn-success btn-sm mt-2" onclick="copyToClipboard(document.getElementById('final-dongs-regex-output').innerText)">📋 정규식 복사</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel mt-4" style="border: 2px solid #6c757d;">
+        <h3 class="text-center mb-3">🛠️ 인성순정 마스터 생성기</h3>
+        <p class="text-center text-muted small">[HTTP 서버 완벽 대응 버전]<br>구형 서버에서도 복사하기 기능이 정상 작동하도록 수정되었습니다.</p>
+        
+        <div class="result-box bg-light border p-3 mb-3" id="master-generator-input-display" style="word-break: break-all;">
+            <!-- 최종 통합 동 목록이 여기에 표시됨 -->
+        </div>
+        
+        <div class="mb-3 text-center">
+            <strong>키워드 수: <span id="master-keyword-count">0</span></strong> | 
+            <strong>글자 수: <span id="master-char-count">0</span></strong>
+        </div>
+
+        <button type="button" id="generate-master-regex-btn" class="btn btn-dark btn-block mb-3">마스터 정규식 생성</button>
+
+        <div id="master-regex-output-container" style="display:none;">
+            <div class="result-box p-3 bg-white border rounded mb-2" id="master-regex-output" style="word-break: break-all; font-family: monospace; font-size: 0.9em;"></div>
+            <button type="button" class="btn btn-success btn-block" onclick="copyToClipboard(document.getElementById('master-regex-output').innerText)">📋 결과 복사하기 (클릭)</button>
         </div>
     </div>
 </div>
@@ -103,6 +147,6 @@
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<script src="app.js?v=1.2"></script> <!-- Our main application logic -->
+<script src="app.js?v=1.3"></script> <!-- Our main application logic -->
 </body>
 </html>

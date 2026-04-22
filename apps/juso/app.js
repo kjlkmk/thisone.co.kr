@@ -484,8 +484,99 @@ document.getElementById('analyze-dongs-btn').addEventListener('click', async () 
     // Display Reverse Lookup results
     document.getElementById('final-simplified-cities-output').innerText = [...finalSimplifiedCitiesSet].sort().join(',');
     document.getElementById('final-eliminated-cities-output').innerText = [...simplifiedEliminatedCitiesSet].sort().join(',');
+    
+    // --- New: Combined Final Exclusion Logic ---
+    const truncatedEliminatedCities = [...simplifiedEliminatedCitiesSet].map(city => city.substring(0, 2));
+    const combinedFinalExclusionList = [...new Set([...truncatedEliminatedCities, ...finalExcludeDongs.sort()])];
+    
+    document.getElementById('final-combined-exclusion-output').innerText = combinedFinalExclusionList.join(',');
+    
+    // --- New: Combined Final Dong List Logic (Dongs + Final Cities) ---
+    const truncatedFinalCities = [...finalSimplifiedCitiesSet].map(city => city.substring(0, 2));
+    const combinedFinalDongList = [...new Set([...dongsToAnalyze, ...truncatedFinalCities])].sort();
+    
+    document.getElementById('final-combined-dongs-output').innerText = combinedFinalDongList.join(',');
+
+    // --- New: Regex Generation Logic ---
+    const exclusionRegex = generateCompressedRegex(combinedFinalExclusionList);
+    const dongsRegex = generateCompressedRegex(combinedFinalDongList);
+
+    document.getElementById('final-exclusion-regex-output').innerText = exclusionRegex;
+    document.getElementById('final-dongs-regex-output').innerText = dongsRegex;
+
+    // --- New: Master Generator Logic ---
+    const masterInputDisplay = document.getElementById('master-generator-input-display');
+    const masterKeywordCount = document.getElementById('master-keyword-count');
+    const masterCharCount = document.getElementById('master-char-count');
+    
+    const dongListStr = combinedFinalDongList.join(',');
+    masterInputDisplay.innerText = dongListStr;
+    masterKeywordCount.innerText = combinedFinalDongList.length;
+    masterCharCount.innerText = dongListStr.length;
+    
+    // Reset output when new analysis starts
+    document.getElementById('master-regex-output-container').style.display = 'none';
+    document.getElementById('master-regex-output').innerText = '';
     // --- End Reverse Lookup Logic (Integrated) ---
 });
+
+// Event Listener for Master Regex Generation
+document.getElementById('generate-master-regex-btn').addEventListener('click', () => {
+    const outputContainer = document.getElementById('master-regex-output-container');
+    const outputDiv = document.getElementById('master-regex-output');
+    
+    const dongListStr = document.getElementById('master-generator-input-display').innerText;
+    if (!dongListStr || dongListStr.trim() === "") {
+        alert("분석된 동 목록이 없습니다.");
+        return;
+    }
+    
+    const dongList = dongListStr.split(',');
+    // Generate negative lookahead master regex: ^(?![^$]*(동1|동2|...))[^$]*
+    const regexPattern = `^(?![^$]*(${dongList.join('|')}))[^$]*`;
+    
+    outputDiv.innerText = regexPattern;
+    outputContainer.style.display = 'block';
+});
+
+// Helper function to generate compressed regex pattern like prefix[chars]|...
+function generateCompressedRegex(list) {
+    if (!list || list.length === 0) return "";
+    
+    const items = [...new Set(list)].sort();
+    const groups = {};
+    
+    items.forEach(item => {
+        if (item.length === 0) return;
+        const first = item.charAt(0);
+        const rest = item.substring(1);
+        if (!groups[first]) groups[first] = [];
+        groups[first].push(rest);
+    });
+    
+    const parts = [];
+    for (const first of Object.keys(groups).sort()) {
+        const suffixes = groups[first];
+        if (suffixes.length === 1) {
+            parts.push(first + suffixes[0]);
+        } else {
+            const allSingle = suffixes.every(s => s.length === 1);
+            if (allSingle) {
+                parts.push(`${first}[${suffixes.join('')}]`);
+            } else {
+                const hasEmpty = suffixes.includes("");
+                const nonEmpty = suffixes.filter(s => s !== "");
+                if (hasEmpty) {
+                    parts.push(`${first}(${nonEmpty.join('|')})?`);
+                } else {
+                    parts.push(`${first}(${nonEmpty.join('|')})`);
+                }
+            }
+        }
+    }
+    
+    return parts.join('|');
+}
 
 // Helper function for simplifying city names (client-side equivalent of Flask's simplify_city_name)
 function simplifyCityName(fullCityName) {
