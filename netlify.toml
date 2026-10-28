@@ -3,3 +3,16 @@
   publish = "_site"
 
 
+
+# 웹 장기 (apps/janggi): 멀티스레드 WASM 엔진(SharedArrayBuffer)용 Cross-Origin Isolation 헤더
+# 사이트 전체가 아니라 이 경로에만 적용하여 다른 페이지의 외부 리소스(임베드/광고 등)에 영향이 없도록 함
+[[headers]]
+  for = "/apps/janggi/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
+
+[[headers]]
+  for = "/apps/janggi/engine/*.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"

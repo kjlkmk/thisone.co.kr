@@ -1,115 +1,2490 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-package/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-package/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="/favicon-package/favicon-192x192.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-package/favicon-16x16.png">
-<link rel="manifest" href="/favicon-package/manifest.json">
-<link rel="mask-icon" href="/favicon-package/safari-pinned-tab.svg" color="#5bbad5">
-<meta name="msapplication-TileColor" content="#da532c">
-<meta name="theme-color" content="#ffffff">
-<link rel="icon" href="/favicon.ico" />
-            <title>장기 FEN 변환기</title>
-            <meta name="description" content="장기(Janggi) 기보나 특정 상황을 FEN(Forsyth-Edwards Notation) 문자열로 손쉽게 변환하고 편집하세요. 장기판 위에서 기물을 직접 배치하고 FEN 코드를 생성하거나 복사할 수 있는 웹 도구입니다.">
-            <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
-            <link rel="stylesheet" href="css/style.css" />
-            
-            <!-- Bootstrap CSS CDN -->
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-            
-            <!-- Google tag (gtag.js) -->
-            <script async src="https://www.googletagmanager.com/gtag/js?id=G-MS57JQS903"></script>
-            <script>
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-            
-              gtag('config', 'G-MS57JQS903');
-            </script>
-        </head>  <body>
-    
-    <div class="container">
-      <h1>장기 FEN 변환기</h1>
-      <br>
-      <div class="editor-container">
-        <div class="board-container">
-          <div id="janggi-board" class="janggi-board"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>웹 장기 (Web Janggi) - 서버 없는 브라우저 스톡피쉬 AI 대국</title>
+  <meta name="description" content="설치 없이 브라우저에서 바로 Fairy-Stockfish AI와 한국 장기를 둘 수 있는 웹 장기입니다. 판 편집, FEN 입력, 실시간 형세 분석, 기보 저장을 지원합니다." />
+  <link rel="icon" href="/favicon.ico" />
+  <!-- GitHub Pages 등 헤더 설정이 불가능한 정적 호스팅에서 SharedArrayBuffer(멀티스레드 WASM) 활성화 -->
+  <script src="coi-serviceworker.js"></script>
+  <script src="engine/stockfish.js"></script>
+  <style>
+    :root {
+      --bg-main: #0f111a;
+      --bg-panel: #1a1d2b;
+      --bg-card: #24283b;
+      --accent-gold: #ffd166;
+      --accent-blue: #06d6a0;
+      --accent-red: #ef476f;
+      --border-color: #333852;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --board-bg: #d79b57;
+      --board-line: #523418;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--accent-gold);
+      letter-spacing: -0.5px;
+    }
+
+    .badge-tag {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: #3b82f633;
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    /* Main Container */
+    .app-container {
+      flex: 1;
+      display: flex;
+      padding: 20px;
+      gap: 20px;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Left Control & Board Area */
+    .board-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      background: var(--bg-panel);
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      max-width: 660px;
+    }
+
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #2e344d;
+      border-color: #4b5578;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-danger {
+      background: #991b1b;
+      border-color: #ef4444;
+      color: #fff;
+    }
+
+    .btn-gold {
+      background: #ca8a04;
+      border-color: #eab308;
+      color: #000;
+      font-weight: 700;
+    }
+
+    .btn-group {
+      display: flex;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-group .btn {
+      border-radius: 0;
+      border: none;
+      border-right: 1px solid var(--border-color);
+    }
+
+    .btn-group .btn:last-child {
+      border-right: none;
+    }
+
+    .btn-group .btn.active {
+      background: #3b82f6;
+      color: #fff;
+    }
+
+    select {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* Turn indicator */
+    .turn-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-left: auto;
+    }
+
+    .turn-toggle-group {
+      display: inline-flex;
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 2px;
+      border: 1px solid var(--border-color);
+      gap: 2px;
+    }
+
+    .turn-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .turn-btn.cho.active {
+      background: #0284c7;
+      color: #fff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+
+    .turn-btn.han.active {
+      background: #dc2626;
+      color: #fff;
+      border-color: #f87171;
+      box-shadow: 0 0 10px rgba(248, 113, 113, 0.4);
+    }
+
+    .turn-btn:hover {
+      color: #fff;
+    }
+
+    .turn-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+
+    .turn-cho {
+      background: #38bdf8;
+      box-shadow: 0 0 10px #38bdf8aa;
+    }
+
+    .turn-han {
+      background: #f87171;
+      box-shadow: 0 0 10px #f87171aa;
+    }
+
+    /* Janggi Board Container */
+    .board-wrapper {
+      position: relative;
+      background: #bb7e38 url('assets/janggi/JanggiWood.svg') no-repeat center / 100% 100%;
+      border: 6px solid #5a3818;
+      border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+      width: 630px;
+      height: 700px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* Board Team Badges */
+    .board-header-badge, .board-footer-badge {
+      position: absolute;
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 4px 14px;
+      border-radius: 12px;
+      z-index: 20;
+      letter-spacing: -0.3px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+
+    .board-header-badge {
+      top: 6px;
+    }
+
+    .board-footer-badge {
+      bottom: 6px;
+    }
+
+    .badge-cho-team {
+      background: #0284c7;
+      color: #fff;
+      border: 1px solid #38bdf8;
+    }
+
+    .badge-han-team {
+      background: #dc2626;
+      color: #fff;
+      border: 1px solid #f87171;
+    }
+
+    /* Board Intersections (Clickable Grid) */
+    .board-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .cell-spot {
+      position: absolute;
+      width: 66px;
+      height: 66px;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: auto;
+      border-radius: 50%;
+    }
+
+    .cell-spot:hover::after {
+      content: "";
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    }
+
+    /* SVG Piece Styling */
+    .piece {
+      position: absolute;
+      width: 58px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), filter 0.15s ease;
+      z-index: 10;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
+      pointer-events: none;
+    }
+
+    .piece img {
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .piece:active {
+      cursor: grabbing;
+    }
+
+    /* King (Large) */
+    .piece[data-type="k"], .piece[data-type="K"] {
+      width: 64px;
+      height: 64px;
+    }
+
+    /* 장군(Check) 시 궁성 왕 붉은색 맥동 오라 */
+    @keyframes pulse-check {
+      0% {
+        box-shadow: 0 0 12px 3px #ef4444, inset 0 0 10px 2px #ef4444;
+        transform: scale(1.02);
+      }
+      50% {
+        box-shadow: 0 0 28px 8px #ff0055, inset 0 0 18px 4px #ff0055;
+        transform: scale(1.15);
+      }
+      100% {
+        box-shadow: 0 0 12px 3px #ef4444, inset 0 0 10px 2px #ef4444;
+        transform: scale(1.02);
+      }
+    }
+
+    .piece.king-in-check {
+      animation: pulse-check 0.8s infinite ease-in-out !important;
+      border-radius: 50% !important;
+      background: radial-gradient(circle, rgba(239, 68, 68, 0.55) 0%, rgba(220, 38, 38, 0.2) 70%) !important;
+      border: 3px solid #ff0055 !important;
+      box-shadow: 0 0 20px 4px #ff0055 !important;
+      z-index: 25 !important;
+    }
+
+    /* 장군을 부르고 있는 공격 기물 주황색 맥동 오라 */
+    @keyframes pulse-attacker {
+      0% {
+        box-shadow: 0 0 10px 2px #f59e0b, inset 0 0 8px 2px #f59e0b;
+        transform: scale(1.02);
+      }
+      50% {
+        box-shadow: 0 0 24px 6px #fbbf24, inset 0 0 14px 3px #fbbf24;
+        transform: scale(1.12);
+      }
+      100% {
+        box-shadow: 0 0 10px 2px #f59e0b, inset 0 0 8px 2px #f59e0b;
+        transform: scale(1.02);
+      }
+    }
+
+    .piece.attacker-checking {
+      animation: pulse-attacker 0.8s infinite ease-in-out !important;
+      border-radius: 50% !important;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.45) 0%, rgba(217, 119, 6, 0.15) 70%) !important;
+      border: 3px solid #f59e0b !important;
+      box-shadow: 0 0 18px 4px #f59e0b !important;
+      z-index: 24 !important;
+    }
+
+    /* 합법 이동 가능 위치 안내 (초록 점 및 포획 링) */
+    .legal-move-dot {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.85);
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 10px 3px rgba(16, 185, 129, 0.9);
+      pointer-events: none;
+      z-index: 22;
+      animation: pulse-dot 1.2s infinite ease-in-out;
+    }
+
+    .legal-move-capture {
+      position: absolute;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 3px solid rgba(239, 68, 68, 0.9);
+      box-shadow: 0 0 14px 4px rgba(239, 68, 68, 0.85);
+      pointer-events: none;
+      z-index: 22;
+      animation: pulse-dot 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-dot {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+
+    /* Small pieces (Pawn, Advisor) */
+    .piece[data-type="p"], .piece[data-type="P"],
+    .piece[data-type="a"], .piece[data-type="A"] {
+      width: 50px;
+      height: 50px;
+    }
+
+    /* Selected state */
+    .piece.selected {
+      transform: scale(1.18);
+      filter: drop-shadow(0 0 12px #facc15) drop-shadow(0 6px 12px rgba(0,0,0,0.6));
+      z-index: 25;
+    }
+
+    /* Highlight previous move */
+    .highlight-from {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      border: 3px dashed rgba(250, 204, 21, 0.9);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: pulse 1.5s infinite;
+    }
+
+    .highlight-to {
+      position: absolute;
+      width: 52px;
+      height: 52px;
+      border: 3px solid #facc15;
+      border-radius: 50%;
+      background: rgba(250, 204, 21, 0.28);
+      pointer-events: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    /* Coordinate numbers */
+    .coord-label {
+      position: absolute;
+      font-size: 11px;
+      font-weight: 800;
+      color: rgba(60, 36, 15, 0.85);
+      pointer-events: none;
+      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+    }
+
+    /* Palette for Setup Mode */
+    .setup-palette {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 16px;
+      width: 100%;
+      max-width: 660px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .setup-palette.active {
+      display: flex;
+    }
+
+    .palette-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .palette-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      width: 60px;
+    }
+
+    .palette-pieces {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+      align-items: center;
+    }
+
+    .palette-item {
+      position: relative !important;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+    }
+
+    .palette-item img {
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .palette-item:hover {
+      transform: scale(1.15);
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+    }
+
+    .palette-item.selected {
+      transform: scale(1.18);
+      filter: drop-shadow(0 0 12px #ffd166) drop-shadow(0 0 4px #ffd166);
+    }
+
+    /* Right Panel (Kifu & Export) */
+    .sidebar {
+      width: 440px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .move-count-badge {
+      background: #3b82f6;
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* Move History Table */
+    .kifu-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      max-height: 380px;
+      min-height: 250px;
+    }
+
+    .kifu-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .kifu-table th {
+      text-align: left;
+      padding: 8px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+    }
+
+    .kifu-table td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      cursor: pointer;
+    }
+
+    .kifu-table tr:hover {
+      background: var(--bg-card);
+    }
+
+    .kifu-table tr.current-step {
+      background: #1e3a8a66;
+      font-weight: 700;
+      color: #60a5fa;
+    }
+
+    .kifu-table .badge-cho {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    .kifu-table .badge-han {
+      color: #f87171;
+      font-weight: 700;
+    }
+
+    /* Export Tabs & Area */
+    .export-section {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .tab-btn.active {
+      background: #3b82f633;
+      color: #60a5fa;
+    }
+
+    .export-box {
+      width: 100%;
+      height: 90px;
+      background: #0f111a;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 0.8rem;
+      padding: 10px;
+      resize: none;
+      outline: none;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-row .btn {
+      flex: 1;
+      justify-content: center;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #10b981;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 브라우저 자동재생 정책 안전 우회용 오디오 프리로더 -->
+  <audio id="audioWoodSnap" src="assets/sounds/wood_snap.wav" preload="auto"></audio>
+  <audio id="audioJanggun" src="assets/sounds/voice_janggun.mp3" preload="auto"></audio>
+  <audio id="audioMunggun" src="assets/sounds/voice_munggun.mp3" preload="auto"></audio>
+  <audio id="audioOetong" src="assets/sounds/voice_oetong.mp3" preload="auto"></audio>
+
+  <header>
+    <div class="brand">
+      <h1>🏁 웹 장기 (Web Janggi)</h1>
+      <span class="badge-tag" style="background:#10b98133; color:#10b981; border:1px solid #10b981;">⚡ WebAssembly AI (서버 불필요)</span>
+      <span class="badge-tag" id="engineStatusBadge" style="background:#38bdf822; color:#38bdf8; border:1px solid #38bdf888;">⏳ WASM 엔진 로딩 중...</span>
+      <span class="badge-tag" id="checkWarningBadge" style="display:none; background:#dc2626; color:#ffffff; border:2px solid #ff0055; box-shadow:0 0 16px rgba(220,38,38,0.9); animation:pulse-check 0.8s infinite alternate; font-weight:900; font-size:0.95rem; padding:4px 12px; border-radius:8px;">🚨 [장군!] 왕 공격받음! 멍군 필요</span>
+    </div>
+    <div class="turn-status">
+      <span id="liveAiScoreBadge" style="font-size:0.85rem; color:#ffd166; font-weight:800; background:#24283b; padding:5px 12px; border-radius:8px; border:1px solid #333852;">📊 AI 평가: 대기 중</span>
+      <span style="font-size:0.85rem; color:var(--text-muted); font-weight:600;">턴(선수):</span>
+      <div class="turn-toggle-group">
+        <button class="turn-btn cho active" id="turnBtnCho" onclick="setTurn('b')" title="초(楚) 선공으로 턴 변경">
+          <span class="turn-dot turn-cho"></span> 초(楚) [b]
+        </button>
+        <button class="turn-btn han" id="turnBtnHan" onclick="setTurn('w')" title="한(漢) 선공으로 턴 변경">
+          <span class="turn-dot turn-han"></span> 한(漢) [w]
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <!-- Left Board Section -->
+    <div class="board-section">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="btn-group">
+          <button class="btn active" id="modePlayBtn" onclick="setMode('play')">🎮 대국(수순) 모드</button>
+          <button class="btn" id="modeSetupBtn" onclick="setMode('setup')">🧩 박보/배치 모드</button>
         </div>
 
-        <div class="pieces-palette">
-          <h3>한(Han) 기물</h3>
-          <div class="palette-pieces han-pieces">
-            <div class="palette-piece" data-piece="K">
-              <img src="images/han_gung.png" alt="한 궁" />
-            </div>
-            <div class="palette-piece" data-piece="R">
-              <img src="images/han_cha.png" alt="한 차" />
-            </div>
-            <div class="palette-piece" data-piece="B">
-              <img src="images/han_sang.png" alt="한 상" />
-            </div>
-            <div class="palette-piece" data-piece="N">
-              <img src="images/han_ma.png" alt="한 마" />
-            </div>
-            <div class="palette-piece" data-piece="A">
-              <img src="images/han_sa.png" alt="한 사" />
-            </div>
-            <div class="palette-piece" data-piece="C">
-              <img src="images/han_fo.png" alt="한 포" />
-            </div>
-            <div class="palette-piece" data-piece="P">
-              <img src="images/han_b.png" alt="한 병" />
-            </div>
-          </div>
+        <select id="formationSelect" onchange="applyFormationPreset()">
+          <option value="default">초 귀마 vs 한 원앙마</option>
+          <option value="mm">초 마상상마 vs 한 마상상마</option>
+          <option value="ss">초 상마상마 vs 한 상마상마 (맞상)</option>
+          <option value="empty">판 비우기 (박보용)</option>
+        </select>
 
-          <h3>초(Cho) 기물</h3>
-          <div class="palette-pieces cho-pieces">
-            <div class="palette-piece" data-piece="k">
-              <img src="images/cho_gung.png" alt="초 궁" />
-            </div>
-            <div class="palette-piece" data-piece="r">
-              <img src="images/cho_cha.png" alt="초 차" />
-            </div>
-            <div class="palette-piece" data-piece="b">
-              <img src="images/cho_sang.png" alt="초 상" />
-            </div>
-            <div class="palette-piece" data-piece="n">
-              <img src="images/cho_ma.png" alt="초 마" />
-            </div>
-            <div class="palette-piece" data-piece="a">
-              <img src="images/cho_sa.png" alt="초 사" />
-            </div>
-            <div class="palette-piece" data-piece="c">
-              <img src="images/cho_fo.png" alt="초 포" />
-            </div>
-            <div class="palette-piece" data-piece="p">
-              <img src="images/cho_jol.png" alt="초 졸" />
-            </div>
-          </div>
+        <button class="btn btn-primary" onclick="undoMove()">↩️ 무르기</button>
+        <button class="btn" onclick="passTurn()">⏭️ 한수 쉼</button>
+        <button class="btn" onclick="toggleFlipBoard()">🔄 판 뒤집기</button>
+        <button class="btn btn-danger" onclick="clearAllPieces()">🗑️ 기물 모두 제거</button>
+        <button class="btn" onclick="resetBoard()">🔄 처음으로</button>
+      </div>
 
-          <div class="controls">
-            <button id="clear-board">판 비우기</button>
-            <button id="initial-position">초기 위치</button>
-            <button id="remove-piece">기물 제거</button>
+      <!-- 🤖 스톡피쉬 AI 실시간 대국 & 자동 기보저장 컨트롤 바 -->
+      <div class="toolbar" style="background:linear-gradient(135deg, #162032 0%, #1a1d2b 100%); border-color:#38bdf866; gap:8px;">
+        <span style="font-size:0.85rem; font-weight:800; color:#38bdf8;">🤖 스톡피쉬 대국:</span>
+        <select id="aiSideSelect" onchange="onAiSideChange()" style="border-color:#38bdf888;">
+          <option value="w" selected>🔵 내가 초(선공) vs 🤖 스톡피쉬(한)</option>
+          <option value="b">🔴 내가 한(후공) vs 🤖 스톡피쉬(초)</option>
+          <option value="none">👥 수동 기보 입력 (AI 끄기)</option>
+          <option value="both">⚔️ 스톡피쉬 vs 스톡피쉬 연속 대국</option>
+        </select>
+
+        <select id="aiDepthSelect" title="스톡피쉬 수읽기 깊이(Depth)">
+          <option value="8">Depth 8 (빠름)</option>
+          <option value="10">Depth 10 (표준)</option>
+          <option value="12" selected>Depth 12 (정밀 추천)</option>
+          <option value="15">Depth 15 (고수)</option>
+          <option value="18">Depth 18 (최강)</option>
+        </select>
+
+        <select id="aiVariantSelect" title="장기 규칙(UCI_Variant) 선택">
+          <option value="janggimodern" selected>1) janggimodern (프로기전 기본)</option>
+          <option value="janggi">2) janggi (협회 토너먼트)</option>
+          <option value="janggitraditional">3) janggitraditional (전통 외통)</option>
+          <option value="janggicasual">4) janggicasual (동네 캐주얼)</option>
+        </select>
+
+        <button class="btn btn-gold" id="btnAiMoveNow" onclick="requestStockfishMove()" title="현재 차례를 스톡피쉬 AI가 즉시 계산해서 착수합니다">
+          ⚡ AI 1수 두기
+        </button>
+
+        <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.8rem; color:#cbd5e1; cursor:pointer; margin-left:auto;">
+          <input type="checkbox" id="chkAutoSaveServer" checked />
+          매 수 game_sample.json 자동저장
+        </label>
+      </div>
+
+      <!-- Palette for Setup Mode -->
+      <div class="setup-palette" id="setupPalette">
+        <div class="palette-row">
+          <span class="palette-label" style="color:#38bdf8;">초(楚) 기물:</span>
+          <div class="palette-pieces">
+            <div class="palette-item selected" onclick="selectPalette('k', event)" title="초 궁(楚)"><img src="assets/janggi/blue_king.svg" alt="楚" /></div>
+            <div class="palette-item" onclick="selectPalette('r', event)" title="초 차(車)"><img src="assets/janggi/blue_chariot.svg" alt="車" /></div>
+            <div class="palette-item" onclick="selectPalette('c', event)" title="초 포(包)"><img src="assets/janggi/blue_cannon.svg" alt="包" /></div>
+            <div class="palette-item" onclick="selectPalette('n', event)" title="초 마(馬)"><img src="assets/janggi/blue_horse.svg" alt="馬" /></div>
+            <div class="palette-item" onclick="selectPalette('b', event)" title="초 상(象)"><img src="assets/janggi/blue_elephant.svg" alt="象" /></div>
+            <div class="palette-item" onclick="selectPalette('a', event)" title="초 사(士)"><img src="assets/janggi/blue_advisor.svg" alt="士" /></div>
+            <div class="palette-item" onclick="selectPalette('p', event)" title="초 졸(卒)"><img src="assets/janggi/blue_pawn.svg" alt="卒" /></div>
+          </div>
+          <button class="btn" style="margin-left:auto; font-size:0.75rem; padding:5px 10px;" onclick="loadCustomFenPrompt()">📥 FEN 불러오기</button>
+        </div>
+        <div class="palette-row">
+          <span class="palette-label" style="color:#f87171;">한(漢) 기물:</span>
+          <div class="palette-pieces">
+            <div class="palette-item" onclick="selectPalette('K', event)" title="한 궁(漢)"><img src="assets/janggi/red_king.svg" alt="漢" /></div>
+            <div class="palette-item" onclick="selectPalette('R', event)" title="한 차(車)"><img src="assets/janggi/red_chariot.svg" alt="車" /></div>
+            <div class="palette-item" onclick="selectPalette('C', event)" title="한 포(包)"><img src="assets/janggi/red_cannon.svg" alt="包" /></div>
+            <div class="palette-item" onclick="selectPalette('N', event)" title="한 마(馬)"><img src="assets/janggi/red_horse.svg" alt="馬" /></div>
+            <div class="palette-item" onclick="selectPalette('B', event)" title="한 상(象)"><img src="assets/janggi/red_elephant.svg" alt="象" /></div>
+            <div class="palette-item" onclick="selectPalette('A', event)" title="한 사(士)"><img src="assets/janggi/red_advisor.svg" alt="士" /></div>
+            <div class="palette-item" onclick="selectPalette('P', event)" title="한 병(兵)"><img src="assets/janggi/red_pawn.svg" alt="兵" /></div>
+          </div>
+          <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+            <div class="turn-toggle-group" style="padding:1px;">
+              <button class="turn-btn cho active" id="paletteTurnChoBtn" onclick="setTurn('b')" style="padding:4px 8px; font-size:0.75rem;">🔵 초[b] 선공</button>
+              <button class="turn-btn han" id="paletteTurnHanBtn" onclick="setTurn('w')" style="padding:4px 8px; font-size:0.75rem;">🔴 한[w] 선공</button>
+            </div>
+            <button class="btn btn-danger" style="font-size:0.75rem; padding:5px 10px;" onclick="clearAllPieces()">🗑️ 모두 제거</button>
+            <button class="btn" style="font-size:0.75rem; padding:5px 10px;" onclick="selectPalette('eraser', event)">🧹 지우개</button>
+            <button class="btn" style="font-size:0.78rem; padding:5px 12px; background:#10b981; border-color:#059669; color:#fff; font-weight:800;" onclick="setMode('play')">▶️ 배치 완료 (대국 시작)</button>
           </div>
         </div>
       </div>
 
-      <div class="fen-container">
-        <h3>FEN 형식</h3>
-        <textarea id="fen-text" rows="3" cols="50" readonly></textarea>
-        <div class="fen-controls">
-          <button id="copy-fen">FEN 복사</button>
-        </div>
+      <!-- Wooden Board -->
+      <div class="board-wrapper" id="boardWrapper">
+        <div class="board-header-badge badge-cho-team" id="boardTopBadge">🔵 초(楚) 진영 (상단 10단)</div>
+        <div class="board-footer-badge badge-han-team" id="boardBottomBadge">🔴 한(漢) 진영 (하단 1단)</div>
+
+        <!-- Dynamic Pieces and Click Spots will be rendered here -->
+        <div class="board-grid" id="boardGrid"></div>
       </div>
     </div>
 
-    <script src="js/janggi.js"></script>
+    <!-- Right Sidebar: Kifu Record & Export -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>📜 실시간 기보 수순 <span class="move-count-badge" id="moveCount">0수</span></h2>
+        <button class="btn" style="font-size:0.75rem; padding:4px 8px;" onclick="copyKifuJson()">📋 JSON 복사</button>
+      </div>
 
-    <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-  </body>
+      <!-- Move History List -->
+      <div class="kifu-history" id="kifuHistory">
+        <table class="kifu-table">
+          <thead>
+            <tr>
+              <th width="40">수</th>
+              <th width="50">진영</th>
+              <th>기보 표기</th>
+              <th width="80">UCI 좌표</th>
+            </tr>
+          </thead>
+          <tbody id="kifuBody">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Export Area -->
+      <div class="export-section">
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="setExportTab('json')">Remotion JSON</button>
+          <button class="tab-btn" onclick="setExportTab('uci')">UCI Move 텍스트</button>
+          <button class="tab-btn" onclick="setExportTab('fen')">현재 국면 FEN</button>
+        </div>
+
+        <textarea class="export-box" id="exportBox" readonly></textarea>
+
+        <div class="action-row">
+          <button class="btn btn-gold" onclick="copyCurrentExport()">📋 클립보드 복사</button>
+          <button class="btn btn-primary" onclick="downloadGameJson()">💾 파일 다운로드</button>
+        </div>
+        <div class="action-row" style="margin-top:4px;">
+          <button class="btn" style="background:#059669; border-color:#10b981; color:#fff; font-weight:800;" onclick="saveToProjectServer(false)">
+            🚀 game_sample.json 즉시 반영
+          </button>
+          <button class="btn" style="background:#7c3aed; border-color:#8b5cf6; color:#fff; font-weight:800;" onclick="saveToProjectServer(true)">
+            🎬 반영 + 영상/TTS 자동 생성
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toastMsg">복사되었습니다!</div>
+
+  <script>
+    // ==========================================
+    // 1. 상태 변수 및 기본 장기 설정
+    // ==========================================
+    const COLS = 9;
+    const ROWS = 10;
+    const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
+    const API_BASE = 'http://127.0.0.1:8765';
+
+    const PIECE_NAMES = {
+      k: '궁', r: '차', c: '포', n: '마', b: '상', a: '사', p: '졸',
+      K: '궁', R: '차', C: '포', N: '마', B: '상', A: '사', P: '병',
+      // 호환용 (h, e)
+      h: '마', e: '상', H: '마', E: '상'
+    };
+
+    const PIECE_FULL_NAMES = {
+      k: '초궁', r: '초차', c: '초포', n: '초마', b: '초상', a: '초사', p: '초졸',
+      K: '한궁', R: '한차', C: '한포', N: '한마', B: '한상', A: '한사', P: '한병',
+      h: '초마', e: '초상', H: '한마', E: '한상'
+    };
+
+    const PIECE_SVG_MAP = {
+      // 초 (소문자 -> blue)
+      k: 'assets/janggi/blue_king.svg',
+      r: 'assets/janggi/blue_chariot.svg',
+      c: 'assets/janggi/blue_cannon.svg',
+      n: 'assets/janggi/blue_horse.svg',
+      h: 'assets/janggi/blue_horse.svg',
+      b: 'assets/janggi/blue_elephant.svg',
+      e: 'assets/janggi/blue_elephant.svg',
+      a: 'assets/janggi/blue_advisor.svg',
+      p: 'assets/janggi/blue_pawn.svg',
+
+      // 한 (대문자 -> red)
+      K: 'assets/janggi/red_king.svg',
+      R: 'assets/janggi/red_chariot.svg',
+      C: 'assets/janggi/red_cannon.svg',
+      N: 'assets/janggi/red_horse.svg',
+      H: 'assets/janggi/red_horse.svg',
+      B: 'assets/janggi/red_elephant.svg',
+      E: 'assets/janggi/red_elephant.svg',
+      A: 'assets/janggi/red_advisor.svg',
+      P: 'assets/janggi/red_pawn.svg',
+    };
+
+    let appMode = 'play'; // 'play' | 'setup'
+    let selectedPalette = null; // for setup mode
+    let currentTurn = 'b'; // 'b'(초) | 'w'(한)
+    let selectedCell = null; // { col, row }
+    let lastMove = null; // { from: {col, row}, to: {col, row} }
+    let isFlipped = false; // 기본값: 한(漢) 하단 / 초(楚) 상단 (스톡피쉬 및 파이썬 코드 표준 규격)
+
+    // 보드 상태: 10 x 9 2D 배열 (null 또는 문자열 'r', 'k', 'P' 등)
+    let board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+
+    // 기보 수순 기록
+    let initialFen = "";
+    let moveHistory = []; // { step, team, from, to, uci, pieceChar, captured, korean }
+    let currentExportTab = 'json';
+
+    // 스톡피쉬 AI 대국 상태 변수
+    let aiSide = 'w'; // 'w'(한 AI) | 'b'(초 AI) | 'none'(수동) | 'both'(AI vs AI)
+    let isAiThinking = false;
+    let serverConnected = false;
+
+    // 원목 착수음 및 성우 효과음 재생기 (HTML5 오디오 & WebAudio 듀얼 엔진)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let audioUnlocked = false;
+
+    function unlockAllAudio() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+    }
+    window.addEventListener('click', unlockAllAudio, { once: true });
+    window.addEventListener('touchstart', unlockAllAudio, { once: true });
+    window.addEventListener('keydown', unlockAllAudio, { once: true });
+
+    function speakTTS(text) {
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'ko-KR';
+          u.rate = 1.05;
+          u.pitch = 1.0;
+          window.speechSynthesis.speak(u);
+        } catch (e) {
+          console.warn('TTS 실행 실패:', e);
+        }
+      }
+    }
+
+    function playWoodSnap() {
+      unlockAllAudio();
+      const audio = document.getElementById('audioWoodSnap');
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => playSynthWoodSnap());
+      } else {
+        playSynthWoodSnap();
+      }
+    }
+
+    function playSynthWoodSnap() {
+      try {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.09);
+      } catch (e) {}
+    }
+
+    function playVoiceSound(type) {
+      // type: 'janggun' | 'munggun' | 'oetong'
+      unlockAllAudio();
+      const idMap = {
+        janggun: 'audioJanggun',
+        munggun: 'audioMunggun',
+        oetong: 'audioOetong'
+      };
+      const textMap = {
+        janggun: '장군!',
+        munggun: '멍군!',
+        oetong: '외통수!'
+      };
+
+      const audio = document.getElementById(idMap[type]);
+      if (audio) {
+        audio.currentTime = 0;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(e => {
+            console.warn('성우 음성 재생 차단됨 -> TTS 대체 실행:', e);
+            speakTTS(textMap[type] || '장군!');
+          });
+        }
+      } else {
+        speakTTS(textMap[type] || '장군!');
+      }
+    }
+
+    // ==========================================
+    // 2.5 장기 규칙 엔진 (기물 행마법, 장군, 멍군, 외통수 판정)
+    // ==========================================
+    const PALACE_DIAGONALS = [
+      [[3, 0], [4, 1], [5, 2]],
+      [[5, 0], [4, 1], [3, 2]],
+      [[3, 7], [4, 8], [5, 9]],
+      [[5, 7], [4, 8], [3, 9]]
+    ];
+
+    function isInPalace(col, row) {
+      return col >= 3 && col <= 5 && ((row >= 0 && row <= 2) || (row >= 7 && row <= 9));
+    }
+
+    function isLegalPieceMove(bd, fromC, fromR, toC, toR, moverTeam) {
+      if (fromC < 0 || fromC > 8 || fromR < 0 || fromR > 9) return false;
+      if (toC < 0 || toC > 8 || toR < 0 || toR > 9) return false;
+      if (fromC === toC && fromR === toR) return false;
+
+      const piece = bd[fromR]?.[fromC];
+      if (!piece) return false;
+
+      const isCho = piece === piece.toLowerCase();
+      const pieceTeam = isCho ? 'cho' : 'han';
+      if (pieceTeam !== moverTeam) return false;
+
+      const dest = bd[toR]?.[toC];
+      if (dest) {
+        const isDestCho = dest === dest.toLowerCase();
+        const destTeam = isDestCho ? 'cho' : 'han';
+        if (destTeam === moverTeam) return false; // 아군 기물 공격 불가
+      }
+
+      const type = piece.toLowerCase();
+      const dc = toC - fromC;
+      const dr = toR - fromR;
+
+      // 1) 차 (r)
+      if (type === 'r') {
+        if (fromC === toC) {
+          const minR = Math.min(fromR, toR);
+          const maxR = Math.max(fromR, toR);
+          for (let r = minR + 1; r < maxR; r++) {
+            if (bd[r][fromC] !== null) return false;
+          }
+          return true;
+        }
+        if (fromR === toR) {
+          const minC = Math.min(fromC, toC);
+          const maxC = Math.max(fromC, toC);
+          for (let c = minC + 1; c < maxC; c++) {
+            if (bd[fromR][c] !== null) return false;
+          }
+          return true;
+        }
+        // 궁성 대각선
+        if (isInPalace(fromC, fromR) && isInPalace(toC, toR) && Math.floor(fromR / 5) === Math.floor(toR / 5)) {
+          for (const diag of PALACE_DIAGONALS) {
+            const idx1 = diag.findIndex(([c, r]) => c === fromC && r === fromR);
+            const idx2 = diag.findIndex(([c, r]) => c === toC && r === toR);
+            if (idx1 !== -1 && idx2 !== -1) {
+              if (Math.abs(idx1 - idx2) === 1) return true;
+              if (Math.abs(idx1 - idx2) === 2) {
+                const [midC, midR] = diag[1];
+                return bd[midR][midC] === null;
+              }
+            }
+          }
+        }
+        return false;
+      }
+
+      // 2) 포 (c)
+      if (type === 'c') {
+        if (dest && dest.toLowerCase() === 'c') return false; // 포로 포 잡기 불가
+
+        if (fromC === toC) {
+          const minR = Math.min(fromR, toR);
+          const maxR = Math.max(fromR, toR);
+          let screens = 0;
+          for (let r = minR + 1; r < maxR; r++) {
+            const mid = bd[r][fromC];
+            if (mid !== null) {
+              if (mid.toLowerCase() === 'c') return false; // 포를 다리로 넘기 불가
+              screens++;
+            }
+          }
+          return screens === 1;
+        }
+        if (fromR === toR) {
+          const minC = Math.min(fromC, toC);
+          const maxC = Math.max(fromC, toC);
+          let screens = 0;
+          for (let c = minC + 1; c < maxC; c++) {
+            const mid = bd[fromR][c];
+            if (mid !== null) {
+              if (mid.toLowerCase() === 'c') return false; // 포를 다리로 넘기 불가
+              screens++;
+            }
+          }
+          return screens === 1;
+        }
+        // 궁성 대각선
+        if (isInPalace(fromC, fromR) && isInPalace(toC, toR) && Math.floor(fromR / 5) === Math.floor(toR / 5)) {
+          for (const diag of PALACE_DIAGONALS) {
+            const idx1 = diag.findIndex(([c, r]) => c === fromC && r === fromR);
+            const idx2 = diag.findIndex(([c, r]) => c === toC && r === toR);
+            if (idx1 !== -1 && idx2 !== -1 && Math.abs(idx1 - idx2) === 2) {
+              const [midC, midR] = diag[1];
+              const mid = bd[midR][midC];
+              return mid !== null && mid.toLowerCase() !== 'c';
+            }
+          }
+        }
+        return false;
+      }
+
+      // 3) 마 (n, h)
+      if (type === 'n' || type === 'h') {
+        if (Math.abs(dc) === 1 && Math.abs(dr) === 2) {
+          const legR = fromR + (dr > 0 ? 1 : -1);
+          return bd[legR][fromC] === null;
+        }
+        if (Math.abs(dc) === 2 && Math.abs(dr) === 1) {
+          const legC = fromC + (dc > 0 ? 1 : -1);
+          return bd[fromR][legC] === null;
+        }
+        return false;
+      }
+
+      // 4) 상 (b, e)
+      if (type === 'b' || type === 'e') {
+        if (Math.abs(dc) === 2 && Math.abs(dr) === 3) {
+          const step1R = fromR + (dr > 0 ? 1 : -1);
+          const step2R = fromR + (dr > 0 ? 2 : -2);
+          const step2C = fromC + (dc > 0 ? 1 : -1);
+          return bd[step1R][fromC] === null && bd[step2R][step2C] === null;
+        }
+        if (Math.abs(dc) === 3 && Math.abs(dr) === 2) {
+          const step1C = fromC + (dc > 0 ? 1 : -1);
+          const step2C = fromC + (dc > 0 ? 2 : -2);
+          const step2R = fromR + (dr > 0 ? 1 : -1);
+          return bd[fromR][step1C] === null && bd[step2R][step2C] === null;
+        }
+        return false;
+      }
+
+      // 5) 졸/병 (p)
+      if (type === 'p') {
+        const forwardDir = isCho ? 1 : -1;
+        // 직진 전진
+        if (dc === 0 && dr === forwardDir) return true;
+        // 좌우 이동
+        if (Math.abs(dc) === 1 && dr === 0) return true;
+        // 궁성 대각선 전진
+        if (isInPalace(fromC, fromR) && isInPalace(toC, toR) && Math.floor(fromR / 5) === Math.floor(toR / 5)) {
+          if (Math.abs(dc) === 1 && dr === forwardDir) {
+            for (const diag of PALACE_DIAGONALS) {
+              const idx1 = diag.findIndex(([c, r]) => c === fromC && r === fromR);
+              const idx2 = diag.findIndex(([c, r]) => c === toC && r === toR);
+              if (idx1 !== -1 && idx2 !== -1 && Math.abs(idx1 - idx2) === 1) {
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+
+      // 6) 궁/사 (k, a)
+      if (type === 'k' || type === 'a') {
+        if (!isInPalace(fromC, fromR) || !isInPalace(toC, toR)) return false;
+        if (Math.floor(fromR / 5) !== Math.floor(toR / 5)) return false;
+        // 상하좌우 1칸
+        if ((Math.abs(dc) === 1 && dr === 0) || (dc === 0 && Math.abs(dr) === 1)) return true;
+        // 대각선 1칸 (궁성 대각선 경로만)
+        for (const diag of PALACE_DIAGONALS) {
+          const idx1 = diag.findIndex(([c, r]) => c === fromC && r === fromR);
+          const idx2 = diag.findIndex(([c, r]) => c === toC && r === toR);
+          if (idx1 !== -1 && idx2 !== -1 && Math.abs(idx1 - idx2) === 1) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      return false;
+    }
+
+    function canPieceAttackKing(bd, ac, ar, pieceChar, kc, kr) {
+      const isCho = pieceChar === pieceChar.toLowerCase();
+      return isLegalPieceMove(bd, ac, ar, kc, kr, isCho ? 'cho' : 'han');
+    }
+
+    function findKingCheckInfo(bd, targetTeam) {
+      const kingChar = targetTeam === 'cho' ? 'k' : 'K';
+      let kingCol = null;
+      let kingRow = null;
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (bd[r][c] === kingChar) {
+            kingCol = c;
+            kingRow = r;
+            break;
+          }
+        }
+        if (kingCol !== null) break;
+      }
+      if (kingCol === null || kingRow === null) {
+        return { inCheck: false, kingCol: null, kingRow: null, attackerCol: null, attackerRow: null };
+      }
+
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 9; c++) {
+          const ch = bd[r][c];
+          if (!ch) continue;
+          const isCho = ch === ch.toLowerCase();
+          const team = isCho ? 'cho' : 'han';
+          if (team === targetTeam) continue;
+
+          if (canPieceAttackKing(bd, c, r, ch, kingCol, kingRow)) {
+            return { inCheck: true, kingCol, kingRow, attackerCol: c, attackerRow: r };
+          }
+        }
+      }
+      return { inCheck: false, kingCol, kingRow, attackerCol: null, attackerRow: null };
+    }
+
+    function hasLegalCheckEscape(bd, targetTeam) {
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 9; c++) {
+          const ch = bd[r][c];
+          if (!ch) continue;
+          const isCho = ch === ch.toLowerCase();
+          const team = isCho ? 'cho' : 'han';
+          if (team !== targetTeam) continue;
+
+          for (let tr = 0; tr < 10; tr++) {
+            for (let tc = 0; tc < 9; tc++) {
+              if (r === tr && c === tc) continue;
+              if (isLegalPieceMove(bd, c, r, tc, tr, targetTeam)) {
+                const dest = bd[tr][tc];
+                bd[tr][tc] = ch;
+                bd[r][c] = null;
+                const stillInCheck = findKingCheckInfo(bd, targetTeam).inCheck;
+                bd[r][c] = ch;
+                bd[tr][tc] = dest;
+
+                if (!stillInCheck) return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    function getLegalMovesForSelectedPiece(c, r) {
+      const piece = board[r]?.[c];
+      if (!piece) return [];
+      const moverTeam = piece === piece.toLowerCase() ? 'cho' : 'han';
+      const moves = [];
+      for (let tr = 0; tr < ROWS; tr++) {
+        for (let tc = 0; tc < COLS; tc++) {
+          if (c === tc && r === tr) continue;
+          if (!isLegalPieceMove(board, c, r, tc, tr, moverTeam)) continue;
+          const destPiece = board[tr][tc];
+          board[tr][tc] = piece;
+          board[r][c] = null;
+          const stillInCheck = findKingCheckInfo(board, moverTeam).inCheck;
+          board[r][c] = piece;
+          board[tr][tc] = destPiece;
+          if (!stillInCheck) {
+            moves.push({ col: tc, row: tr, isCapture: Boolean(destPiece) });
+          }
+        }
+      }
+      return moves;
+    }
+
+    // ==========================================
+    // 2. 초기 포진 및 보드 세팅 (Fairy-Stockfish 표준 N=마, B=상)
+    // ==========================================
+    function initDefaultBoard() {
+      board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+
+      // 초(Cho - 파랑, 소문자, 상단 row 0~3)
+      board[0][0] = 'r'; board[0][1] = 'n'; board[0][2] = 'b'; board[0][3] = 'a';
+      board[0][5] = 'a'; board[0][6] = 'b'; board[0][7] = 'n'; board[0][8] = 'r';
+      board[1][4] = 'k';
+      board[2][1] = 'c'; board[2][7] = 'c';
+      board[3][0] = 'p'; board[3][2] = 'p'; board[3][4] = 'p'; board[3][6] = 'p'; board[3][8] = 'p';
+
+      // 한(Han - 빨강, 대문자, 하단 row 6~9)
+      board[6][0] = 'P'; board[6][2] = 'P'; board[6][4] = 'P'; board[6][6] = 'P'; board[6][8] = 'P';
+      board[7][1] = 'C'; board[7][7] = 'C';
+      board[8][4] = 'K';
+      board[9][0] = 'R'; board[9][1] = 'N'; board[9][2] = 'B'; board[9][3] = 'A';
+      board[9][5] = 'A'; board[9][6] = 'B'; board[9][7] = 'N'; board[9][8] = 'R';
+
+      currentTurn = 'b';
+      initialFen = getBoardFen();
+      moveHistory = [];
+      lastMove = null;
+      selectedCell = null;
+      renderBoard();
+      updateKifuView();
+    }
+
+    function applyFormationPreset() {
+      const type = document.getElementById('formationSelect').value;
+      if (type === 'empty') {
+        board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+        currentTurn = 'b';
+        initialFen = getBoardFen();
+        moveHistory = [];
+        lastMove = null;
+        selectedCell = null;
+        renderBoard();
+        updateKifuView();
+        return;
+      }
+      initDefaultBoard();
+      if (type === 'ss') {
+        // 맞상 (상마상마)
+        board[0][1] = 'b'; board[0][2] = 'n';
+        board[9][1] = 'B'; board[9][2] = 'N';
+      }
+      initialFen = getBoardFen();
+      renderBoard();
+      updateKifuView();
+    }
+
+    // ==========================================
+    // 3. FEN 생성기 & 파서
+    // ==========================================
+    function getBoardFen() {
+      const rows = [];
+      for (let r = 0; r < ROWS; r++) {
+        let emptyCount = 0;
+        let rowStr = "";
+        for (let c = 0; c < COLS; c++) {
+          const char = board[r][c];
+          if (!char) {
+            emptyCount++;
+          } else {
+            if (emptyCount > 0) {
+              rowStr += emptyCount;
+              emptyCount = 0;
+            }
+            rowStr += char;
+          }
+        }
+        if (emptyCount > 0) rowStr += emptyCount;
+        rows.push(rowStr);
+      }
+      return `${rows.join('/')} ${currentTurn} - - 0 1`;
+    }
+
+    // ==========================================
+    // 4. 좌표 변환 (UCI 규격)
+    // col: 0~8 (a~i), row: 0~9 (rank: 10~1)
+    // ==========================================
+    function toUciSquare(col, row) {
+      const file = FILES[col];
+      const rank = 10 - row;
+      return `${file}${rank}`;
+    }
+
+    // ==========================================
+    // 5. 보드 렌더링
+    // ==========================================
+    function renderBoard() {
+      const grid = document.getElementById('boardGrid');
+      grid.innerHTML = "";
+
+      const choCheck = findKingCheckInfo(board, 'cho');
+      const hanCheck = findKingCheckInfo(board, 'han');
+      const currentKingCheck = currentTurn === 'b' ? choCheck : hanCheck;
+      const checkBadge = document.getElementById('checkWarningBadge');
+      if (checkBadge) {
+        if (currentKingCheck.inCheck) {
+          const defender = currentTurn === 'b' ? '초(楚)' : '한(漢)';
+          checkBadge.style.display = 'inline-flex';
+          checkBadge.innerText = `🚨 [장군!] ${defender} 궁 위험! 멍군 필요`;
+        } else {
+          checkBadge.style.display = 'none';
+        }
+      }
+
+      // 선택된 기물이 있는 경우 이동 가능한 모든 합법 경로(멍군 경로) 계산
+      let legalMoves = [];
+      if (selectedCell) {
+        legalMoves = getLegalMovesForSelectedPiece(selectedCell.col, selectedCell.row);
+      }
+
+      for (let screenR = 0; screenR < ROWS; screenR++) {
+        for (let screenC = 0; screenC < COLS; screenC++) {
+          const r = isFlipped ? (ROWS - 1 - screenR) : screenR;
+          const c = isFlipped ? (COLS - 1 - screenC) : screenC;
+
+          // JanggiWood.svg viewBox="0 0 900 1000"의 실제 선 교차점 좌표와 100% 일치
+          // x: 50, 150, 250, 350, 450, 550, 650, 750, 850 (너비 900)
+          // y: 50, 150, 250, 350, 450, 550, 650, 750, 850, 950 (높이 1000)
+          const posXPercent = ((50 + screenC * 100) / 900) * 100;
+          const posYPercent = ((50 + screenR * 100) / 1000) * 100;
+
+          const cell = document.createElement('div');
+          cell.className = 'cell-spot';
+          cell.style.left = `${posXPercent}%`;
+          cell.style.top = `${posYPercent}%`;
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          cell.onclick = () => onCellClick(c, r);
+
+          // 테두리 좌표 라벨 (좌측 랭크 번호, 하단 파일 문자)
+          if (screenC === 0) {
+            const rankLabel = document.createElement('span');
+            rankLabel.className = 'coord-label';
+            rankLabel.style.left = '-22px';
+            rankLabel.innerText = 10 - r;
+            cell.appendChild(rankLabel);
+          }
+          if (screenR === ROWS - 1) {
+            const fileLabel = document.createElement('span');
+            fileLabel.className = 'coord-label';
+            fileLabel.style.bottom = '-22px';
+            fileLabel.innerText = FILES[c];
+            cell.appendChild(fileLabel);
+          }
+
+          // 이전 수 하이라이트
+          if (lastMove) {
+            if (lastMove.from.col === c && lastMove.from.row === r) {
+              const hf = document.createElement('div');
+              hf.className = 'highlight-from';
+              cell.appendChild(hf);
+            }
+            if (lastMove.to.col === c && lastMove.to.row === r) {
+              const ht = document.createElement('div');
+              ht.className = 'highlight-to';
+              cell.appendChild(ht);
+            }
+          }
+
+          // 합법 이동 가능 위치 안내 (초록 점 또는 적색 캡처 링)
+          const legalDest = legalMoves.find(m => m.col === c && m.row === r);
+          if (legalDest) {
+            const dot = document.createElement('div');
+            dot.className = legalDest.isCapture ? 'legal-move-capture' : 'legal-move-dot';
+            cell.appendChild(dot);
+          }
+
+          // 기물 표시 (고화질 SVG 장기말)
+          const pieceChar = board[r][c];
+          if (pieceChar) {
+            const isCho = pieceChar === pieceChar.toLowerCase();
+            const pieceDiv = document.createElement('div');
+            pieceDiv.className = `piece ${isCho ? 'cho' : 'han'}`;
+            pieceDiv.dataset.type = pieceChar;
+
+            const pieceImg = document.createElement('img');
+            pieceImg.src = PIECE_SVG_MAP[pieceChar] || `assets/janggi/${isCho ? 'blue' : 'red'}_pawn.svg`;
+            pieceImg.alt = PIECE_NAMES[pieceChar] || pieceChar;
+            pieceImg.draggable = false;
+            pieceDiv.appendChild(pieceImg);
+
+            if (selectedCell && selectedCell.col === c && selectedCell.row === r) {
+              pieceDiv.classList.add('selected');
+            }
+
+            // 장군 상태인 궁에 붉은색 맥동 오라 표시
+            if (pieceChar === 'k' && choCheck.inCheck) {
+              pieceDiv.classList.add('king-in-check');
+            } else if (pieceChar === 'K' && hanCheck.inCheck) {
+              pieceDiv.classList.add('king-in-check');
+            }
+
+            // 장군을 부르고 있는 공격 기물에 주황색 맥동 표시
+            if (currentKingCheck.inCheck && c === currentKingCheck.attackerCol && r === currentKingCheck.attackerRow) {
+              pieceDiv.classList.add('attacker-checking');
+            }
+
+            cell.appendChild(pieceDiv);
+          }
+
+          grid.appendChild(cell);
+        }
+      }
+
+      // 보드 상/하단 진영 배지 갱신
+      const topBadge = document.getElementById('boardTopBadge');
+      const bottomBadge = document.getElementById('boardBottomBadge');
+      if (topBadge && bottomBadge) {
+        if (!isFlipped) {
+          topBadge.className = 'board-header-badge badge-cho-team';
+          topBadge.innerText = '🔵 초(楚) 진영 (상단 10단)';
+          bottomBadge.className = 'board-footer-badge badge-han-team';
+          bottomBadge.innerText = '🔴 한(漢) 진영 (하단 1단)';
+        } else {
+          topBadge.className = 'board-header-badge badge-han-team';
+          topBadge.innerText = '🔴 한(漢) 진영 (상단 1단)';
+          bottomBadge.className = 'board-footer-badge badge-cho-team';
+          bottomBadge.innerText = '🔵 초(楚) 진영 (하단 10단)';
+        }
+      }
+
+      // 턴 선택 버튼 UI 동기화
+      const btnCho = document.getElementById('turnBtnCho');
+      const btnHan = document.getElementById('turnBtnHan');
+      const palBtnCho = document.getElementById('paletteTurnChoBtn');
+      const palBtnHan = document.getElementById('paletteTurnHanBtn');
+
+      if (btnCho) btnCho.classList.toggle('active', currentTurn === 'b');
+      if (btnHan) btnHan.classList.toggle('active', currentTurn === 'w');
+      if (palBtnCho) palBtnCho.classList.toggle('active', currentTurn === 'b');
+      if (palBtnHan) palBtnHan.classList.toggle('active', currentTurn === 'w');
+    }
+
+    // 턴(선수) 설정 함수
+    function setTurn(turn) {
+      currentTurn = turn === 'w' ? 'w' : 'b';
+      // 첫 수 전 선공 턴을 바꾸면, 사용자가 선택한 진영을 직접 두고 반대 진영을 스톡피쉬 AI가 맡도록 자동 동기화
+      if (moveHistory.length === 0 && (aiSide === 'b' || aiSide === 'w')) {
+        aiSide = currentTurn === 'b' ? 'w' : 'b';
+        const aiSel = document.getElementById('aiSideSelect');
+        if (aiSel) aiSel.value = aiSide;
+      }
+      initialFen = getBoardFen();
+      renderBoard();
+      updateKifuView();
+      showToast(`턴(선수)이 ${currentTurn === 'b' ? '초(楚) [b]' : '한(漢) [w]'}로 설정되었습니다.`);
+    }
+
+    function toggleTurnInSetup() {
+      setTurn(currentTurn === 'b' ? 'w' : 'b');
+    }
+
+    // ==========================================
+    // 6. 착수 및 클릭 이벤트 처리
+    // ==========================================
+    function onCellClick(col, row) {
+      if (appMode === 'setup') {
+        // 박보/기물 배치 모드
+        if (!selectedPalette) {
+          showToast('상단 팔레트에서 배치할 기물을 먼저 선택하세요!');
+          return;
+        }
+        if (selectedPalette === 'eraser') {
+          board[row][col] = null;
+        } else {
+          board[row][col] = selectedPalette;
+        }
+        initialFen = getBoardFen();
+        moveHistory = [];
+        lastMove = null;
+        renderBoard();
+        updateKifuView();
+        return;
+      }
+
+      // 대국(수순) 모드
+      if (isAiThinking) {
+        showToast('🤖 스톡피쉬 AI가 수읽기 중입니다. 잠시만 기다려주세요!');
+        return;
+      }
+
+      const clickedPiece = board[row][col];
+
+      // 1) 기물 미선택 상태
+      if (!selectedCell) {
+        if (!clickedPiece) return;
+        // 선택한 기물이 현재 턴인지 확인
+        const isChoPiece = clickedPiece === clickedPiece.toLowerCase();
+        if ((currentTurn === 'b' && !isChoPiece) || (currentTurn === 'w' && isChoPiece)) {
+          showToast(`현재 ${currentTurn === 'b' ? '초(楚)' : '한(漢)'}의 차례입니다!`);
+          return;
+        }
+
+        const moverTeam = currentTurn === 'b' ? 'cho' : 'han';
+        const kingCheck = findKingCheckInfo(board, moverTeam);
+        const legals = getLegalMovesForSelectedPiece(col, row);
+
+        if (kingCheck.inCheck && legals.length === 0) {
+          playVoiceSound('janggun');
+          showToast('🚨 [장군!] 이 기물로는 장군을 막을(멍군할) 수 없습니다! 궁을 피하거나 멍군 가능한 기물을 선택하세요.');
+          selectedCell = null;
+          renderBoard();
+          return;
+        }
+
+        selectedCell = { col, row };
+        renderBoard();
+        return;
+      }
+
+      // 2) 이미 선택된 기물이 있는 상태
+      const from = selectedCell;
+      const to = { col, row };
+
+      // 같은 자리 클릭 시 선택 취소
+      if (from.col === to.col && from.row === to.row) {
+        selectedCell = null;
+        renderBoard();
+        return;
+      }
+
+      // 같은 팀 기물을 다시 클릭한 경우 -> 선택 변경
+      if (clickedPiece) {
+        const isChoTarget = clickedPiece === clickedPiece.toLowerCase();
+        const isChoFrom = board[from.row][from.col] === board[from.row][from.col].toLowerCase();
+        if (isChoTarget === isChoFrom) {
+          selectedCell = { col, row };
+          renderBoard();
+          return;
+        }
+      }
+
+      // 착수 실행!
+      executeMove(from, to);
+    }
+
+    function fromUciSquare(sq) {
+      if (!sq || typeof sq !== 'string') return { col: 0, row: 0 };
+      const lower = sq.trim().toLowerCase();
+      const col = FILES.indexOf(lower[0]);
+      const row = 10 - parseInt(lower.slice(1), 10);
+      return {
+        col: Math.max(0, Math.min(COLS - 1, col)),
+        row: Math.max(0, Math.min(ROWS - 1, row))
+      };
+    }
+
+    function findKingSquare(turn) {
+      const targetKing = turn === 'b' ? 'k' : 'K';
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (board[r][c] === targetKing) {
+            return { col: c, row: r, uci: toUciSquare(c, r) };
+          }
+        }
+      }
+      return turn === 'b'
+        ? { col: 4, row: 1, uci: 'e9' }
+        : { col: 4, row: 8, uci: 'e2' };
+    }
+
+    function executeMove(from, to, aiMeta = null) {
+      if (!from || !to || from.row == null || from.col == null || to.row == null || to.col == null) {
+        console.error("잘못된 착수 좌표:", { from, to });
+        return false;
+      }
+
+      const moverTeam = currentTurn === 'b' ? 'cho' : 'han';
+      const movingPiece = board[from.row]?.[from.col];
+      if (!movingPiece) {
+        console.warn(`[착수 경고] (${toUciSquare(from.col, from.row)}) 위치에 움직일 기물이 없습니다.`);
+        showToast(`⚠️ (${toUciSquare(from.col, from.row)})에 기물이 없어 착수할 수 없습니다.`);
+        return false;
+      }
+
+      // 기물 진영과 현재 차례 일치 여부 엄격 검증
+      const pieceTeam = movingPiece === movingPiece.toLowerCase() ? 'cho' : 'han';
+      if (pieceTeam !== moverTeam) {
+        console.error(`[착수 거부] 현재 ${moverTeam === 'cho' ? '초(청)' : '한(홍)'} 차례인데 상대 기물(${movingPiece})을 움직이려 했습니다.`);
+        showToast(`⚠️ 현재 ${moverTeam === 'cho' ? '초(청)' : '한(홍)'}의 차례입니다! 상대 기물을 움직일 수 없습니다.`);
+        return false;
+      }
+
+      // 🔍 장기 기물 행마법 규칙 검증
+      if (!isLegalPieceMove(board, from.col, from.row, to.col, to.row, moverTeam)) {
+        console.warn(`[착수 불가] ${movingPiece}의 규칙상 허용되지 않는 이동입니다.`);
+        showToast(`⚠️ 장기 규칙상 해당 위치로 이동할 수 없습니다.`);
+        selectedCell = null;
+        renderBoard();
+        return false;
+      }
+
+      // 🔍 가상 이동 시뮬레이션: 내 궁이 장군(체크)에 노출되는 비합법수/자살수 방지!
+      const capturedPiece = board[to.row]?.[to.col] || null;
+      board[to.row][to.col] = movingPiece;
+      board[from.row][from.col] = null;
+      const selfCheckAfter = findKingCheckInfo(board, moverTeam);
+      // 가상 이동 롤백
+      board[from.row][from.col] = movingPiece;
+      board[to.row][to.col] = capturedPiece;
+
+      if (selfCheckAfter.inCheck) {
+        playVoiceSound('janggun');
+        showToast('🚨 [장군!] 왕이 공격받고 있습니다! 반드시 멍군(궁 피하기, 길 막기, 공격 기물 잡기)을 두어야 합니다!');
+        selectedCell = null;
+        renderBoard();
+        return false;
+      }
+
+      if (moveHistory.length === 0) {
+        initialFen = getBoardFen();
+      }
+      const uci = `${toUciSquare(from.col, from.row)}${toUciSquare(to.col, to.row)}`;
+
+      // 착수 전 내 궁이 장군 상태였는지 확인 (멍군 판별용)
+      const opponentTeam = currentTurn === 'b' ? 'han' : 'cho';
+      const moverWasInCheck = findKingCheckInfo(board, moverTeam).inCheck;
+
+      board[to.row][to.col] = movingPiece;
+      board[from.row][from.col] = null;
+
+      // 1) 원목 착수음 재생
+      playWoodSnap();
+
+      // 2) 장군 / 멍군 / 외통수 판정 및 음성 재생
+      let callout = null;
+      if (capturedPiece === 'k' || capturedPiece === 'K') {
+        callout = 'oetong';
+      } else {
+        const oppCheck = findKingCheckInfo(board, opponentTeam);
+        if (oppCheck.inCheck) {
+          const canEscape = hasLegalCheckEscape(board, opponentTeam);
+          callout = canEscape ? 'janggun' : 'oetong';
+        } else if (moverWasInCheck && !findKingCheckInfo(board, moverTeam).inCheck) {
+          callout = 'munggun';
+        }
+      }
+
+      if (callout) {
+        playVoiceSound(callout);
+        if (callout === 'oetong') {
+          const winner = moverTeam === 'cho' ? '초(楚)' : '한(漢)';
+          showToast(`🏆 외통수! ${winner} 승리!`);
+        } else if (callout === 'janggun') {
+          const target = opponentTeam === 'cho' ? '초(楚)' : '한(漢)';
+          showToast(`⚡ 장군! (${target} 궁 위험)`);
+        } else if (callout === 'munggun') {
+          const defender = moverTeam === 'cho' ? '초(楚)' : '한(漢)';
+          showToast(`🛡️ 멍군! (${defender} 수비 성공)`);
+        }
+      }
+
+      // 한글 기보 표기 생성 (Remotion & branch_analyzer 완벽 호환 포맷)
+      const teamLabel = currentTurn === 'b' ? '초' : '한';
+      const pieceName = PIECE_NAMES[movingPiece] || movingPiece;
+      const destUci = toUciSquare(to.col, to.row);
+      const capLabel = capturedPiece ? (PIECE_FULL_NAMES[capturedPiece] || PIECE_NAMES[capturedPiece]) : '';
+      const calloutTag = callout === 'janggun' ? ' ⚡장군' : callout === 'oetong' ? ' 🏆외통' : callout === 'munggun' ? ' 🛡️멍군' : '';
+      const korean = `${teamLabel} ${pieceName} ${destUci}${capturedPiece ? ` (${capLabel} 포획)` : ''}${calloutTag}`;
+
+      const stepNum = moveHistory.length + 1;
+      const evalEntry = aiMeta ? {
+        step: stepNum,
+        choScoreCp: aiMeta.choScoreCp ?? 0,
+        choPoints: aiMeta.choPoints ?? 0,
+        choWinProb: aiMeta.choWinProb ?? 50,
+        mateIn: aiMeta.mateIn ?? null
+      } : null;
+
+      // 기록 추가
+      moveHistory.push({
+        step: stepNum,
+        team: currentTurn,
+        from,
+        to,
+        uci,
+        movingPiece,
+        capturedPiece,
+        korean,
+        evalEntry
+      });
+
+      lastMove = { from, to };
+      selectedCell = null;
+      currentTurn = currentTurn === 'b' ? 'w' : 'b';
+
+      renderBoard();
+      updateKifuView();
+      autoSaveIfEnabled();
+
+      // 궁(King)이 포획되었으면 대국 종료
+      if (capturedPiece === 'k' || capturedPiece === 'K') {
+        const winner = capturedPiece === 'K' ? '초(楚)' : '한(漢)';
+        showToast(`🏆 대국 종료! ${winner} 승리!`);
+        return;
+      }
+
+      // 다음 차례가 스톡피쉬 AI이면 자동 수읽기 호출 (자연스러운 대국 템포를 위해 최소 1초 후 착수)
+      if (appMode === 'play' && (aiSide === currentTurn || aiSide === 'both')) {
+        setTimeout(() => requestStockfishMove(), 1000);
+      }
+      return true;
+    }
+
+    // 한수 쉼 (Remotion 호환 궁 제자리 좌표 기록)
+    function passTurn(aiMeta = null) {
+      if (appMode !== 'play') return;
+      if (moveHistory.length === 0) {
+        initialFen = getBoardFen();
+      }
+      const teamLabel = currentTurn === 'b' ? '초' : '한';
+      const kingInfo = findKingSquare(currentTurn);
+      const passUci = `${kingInfo.uci}${kingInfo.uci}`;
+      const stepNum = moveHistory.length + 1;
+
+      const evalEntry = aiMeta ? {
+        step: stepNum,
+        choScoreCp: aiMeta.choScoreCp ?? 0,
+        choPoints: aiMeta.choPoints ?? 0,
+        choWinProb: aiMeta.choWinProb ?? 50,
+        mateIn: aiMeta.mateIn ?? null
+      } : null;
+
+      moveHistory.push({
+        step: stepNum,
+        team: currentTurn,
+        from: { col: kingInfo.col, row: kingInfo.row },
+        to: { col: kingInfo.col, row: kingInfo.row },
+        movingPiece: board[kingInfo.row][kingInfo.col],
+        capturedPiece: null,
+        uci: passUci,
+        korean: `${teamLabel} 궁 한수쉼`,
+        evalEntry
+      });
+
+      lastMove = { from: { col: kingInfo.col, row: kingInfo.row }, to: { col: kingInfo.col, row: kingInfo.row } };
+      currentTurn = currentTurn === 'b' ? 'w' : 'b';
+      playWoodSnap();
+      renderBoard();
+      updateKifuView();
+      autoSaveIfEnabled();
+      showToast(`${teamLabel} 한수 쉼 (${passUci}) 적용`);
+
+      if (appMode === 'play' && (aiSide === currentTurn || aiSide === 'both')) {
+        setTimeout(() => requestStockfishMove(), 1000);
+      }
+    }
+
+    // 무르기 (Undo)
+    function undoMove() {
+      if (moveHistory.length === 0 || isAiThinking) return;
+
+      // AI와 1대1 대국 중이고 현재 내 차례라면 2수(AI 응수 + 내 착수)를 함께 물러서 내 차례 유지
+      const shouldPopTwo = (aiSide === 'b' || aiSide === 'w') && (aiSide !== currentTurn) && moveHistory.length >= 2;
+      const popCount = shouldPopTwo ? 2 : 1;
+
+      for (let i = 0; i < popCount; i++) {
+        const last = moveHistory.pop();
+        if (!last) break;
+        if (last.from && last.to && (last.from.row !== last.to.row || last.from.col !== last.to.col)) {
+          board[last.from.row][last.from.col] = last.movingPiece;
+          board[last.to.row][last.to.col] = last.capturedPiece || null;
+        }
+        currentTurn = last.team;
+      }
+
+      const prev = moveHistory[moveHistory.length - 1];
+      lastMove = prev && prev.from ? { from: prev.from, to: prev.to } : null;
+      selectedCell = null;
+
+      renderBoard();
+      updateKifuView();
+      autoSaveIfEnabled();
+      showToast(`${popCount}수 무르기가 완료되었습니다.`);
+    }
+
+    function resetBoard() {
+      isFlipped = false; // 기본: 한나라 하단 (스톡피쉬 표준)
+      currentTurn = 'b';
+      applyFormationPreset();
+      showToast('표준 시점(한 하단 / 초 상단) 기본 포진으로 초기화되었습니다.');
+    }
+
+    function toggleFlipBoard() {
+      isFlipped = !isFlipped;
+      renderBoard();
+      updateKifuView();
+      showToast(isFlipped ? '🔄 초나라 시점 (초 하단 10단)' : '🔄 표준 시점 (한 하단 1단)');
+    }
+
+    function clearAllPieces() {
+      if (confirm('판 위의 모든 기물을 제거하시겠습니까? (빈 판으로 초기화)')) {
+        board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+        initialFen = getBoardFen();
+        moveHistory = [];
+        lastMove = null;
+        selectedCell = null;
+        renderBoard();
+        updateKifuView();
+        showToast('판 위의 모든 기물이 제거되었습니다. 원하는 기물을 배치하세요.');
+      }
+    }
+
+    // ==========================================
+    // 7. 모드 전환 & 박보 팔레트
+    // ==========================================
+    function setMode(mode) {
+      const prevMode = appMode;
+      appMode = mode;
+      document.getElementById('modePlayBtn').classList.toggle('active', mode === 'play');
+      document.getElementById('modeSetupBtn').classList.toggle('active', mode === 'setup');
+      document.getElementById('setupPalette').classList.toggle('active', mode === 'setup');
+      selectedCell = null;
+
+      if (mode === 'setup') {
+        // 배치 모드 진입 시 초 궁(k) 자동 선택
+        const firstItem = document.querySelector('.palette-item');
+        if (firstItem && !selectedPalette) {
+          selectPalette('k', { currentTarget: firstItem });
+        }
+        showToast('🧩 박보/배치 모드: 기물을 선택하고 판을 클릭하세요.');
+      } else {
+        // 배치 모드에서 대국 모드로 전환할 때 현재 판을 초기 FEN으로 확정!
+        if (prevMode === 'setup') {
+          initialFen = getBoardFen();
+          moveHistory = [];
+          lastMove = null;
+          updateKifuView();
+        }
+        showToast('🎮 대국 모드: 직접 착수하거나 스톡피쉬 AI와 대국하세요!');
+        if (aiSide === currentTurn || aiSide === 'both') {
+          setTimeout(() => requestStockfishMove(), 300);
+        }
+      }
+      renderBoard();
+    }
+
+    function selectPalette(pieceChar, evt) {
+      selectedPalette = pieceChar;
+      document.querySelectorAll('.palette-item').forEach(el => el.classList.remove('selected'));
+      let target = evt ? (evt.currentTarget || (evt.target && evt.target.closest('.palette-item'))) : null;
+      if (!target && window.event) {
+        target = window.event.currentTarget || (window.event.target && window.event.target.closest('.palette-item'));
+      }
+      if (target) {
+        target.classList.add('selected');
+      }
+      const name = PIECE_NAMES[pieceChar] || (pieceChar === 'eraser' ? '지우개' : pieceChar);
+      showToast(`'${name}' 선택됨 - 장기판 원하는 칸을 클릭하세요.`);
+    }
+
+    function loadCustomFenPrompt() {
+      const fenInput = prompt("불러올 장기 FEN 문자열을 붙여넣으세요:", initialFen || getBoardFen());
+      if (!fenInput || !fenInput.trim()) return;
+      loadFenToBoard(fenInput.trim());
+      showToast("FEN 국면이 성공적으로 로드되었습니다!");
+    }
+
+    function loadFenToBoard(fenStr) {
+      const parts = fenStr.trim().split(" ");
+      const rows = parts[0].split("/");
+      const turn = parts[1] || "b";
+
+      board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+      rows.forEach((rowStr, rIdx) => {
+        if (rIdx >= ROWS) return;
+        let cIdx = 0;
+        for (let i = 0; i < rowStr.length; i++) {
+          const char = rowStr[i];
+          if (!isNaN(Number(char))) {
+            cIdx += parseInt(char, 10);
+          } else {
+            let normalizedChar = char;
+            if (char === 'h') normalizedChar = 'n';
+            else if (char === 'e') normalizedChar = 'b';
+            else if (char === 'H') normalizedChar = 'N';
+            else if (char === 'E') normalizedChar = 'B';
+
+            if (cIdx < COLS) {
+              board[rIdx][cIdx] = normalizedChar;
+            }
+            cIdx += 1;
+          }
+        }
+      });
+
+      currentTurn = turn === "w" ? "w" : "b";
+      initialFen = getBoardFen();
+      moveHistory = [];
+      lastMove = null;
+      selectedCell = null;
+      renderBoard();
+      updateKifuView();
+    }
+
+    // ==========================================
+    // 7.5. 스톡피쉬 WASM 브라우저 내장 AI 엔진
+    // ==========================================
+    let wasmEngine = null;
+    let wasmWorker = null;
+    let wasmReady = false;
+    let wasmCallback = null;
+    let lastWasmEval = null;
+
+    function initWasmEngine() {
+      const badge = document.getElementById('engineStatusBadge');
+      if (badge) {
+        badge.innerText = '⏳ WASM 엔진 로딩 중...';
+        badge.style.color = '#ffd166';
+        badge.style.borderColor = '#ffd166';
+      }
+
+      // Fairy-Stockfish WASM은 pthread 빌드라 탐색 자체가 내부 워커 스레드에서 돌아갑니다.
+      // 따라서 메인 스레드에서 Stockfish()를 직접 생성해도 UI가 멈추지 않습니다. (공식 권장 방식)
+      // 단, SharedArrayBuffer가 필요하므로 crossOriginIsolated === true 여야 합니다.
+      if (!window.crossOriginIsolated) {
+        console.error('crossOriginIsolated=false → SharedArrayBuffer 사용 불가. COOP/COEP 헤더가 필요합니다.');
+        if (badge) {
+          badge.innerText = '⚠️ 보안 헤더 없음 (npm run web-janggi 로 실행)';
+          badge.style.color = '#ff8a80';
+          badge.style.borderColor = '#ff5252';
+        }
+        showToast && showToast('⚠️ AI 엔진을 쓰려면 npm run web-janggi 로 실행해 주세요 (COOP/COEP 헤더 필요)');
+        return;
+      }
+      fallbackToMainThreadWasm();
+    }
+
+    function fallbackToMainThreadWasm() {
+      const badge = document.getElementById('engineStatusBadge');
+      if (typeof Stockfish === 'function') {
+        Stockfish().then(instance => {
+          wasmEngine = instance;
+          wasmEngine.addMessageListener(line => handleWasmOutput(line));
+          wasmEngine.postMessage('uci');
+          wasmEngine.postMessage('setoption name UCI_Variant value janggimodern');
+          wasmEngine.postMessage('isready');
+          console.log('Fairy-Stockfish WASM 메인 스레드 인스턴스 준비 완료');
+        }).catch(e => {
+          console.error('WASM 초기화 실패:', e);
+          if (badge) {
+            badge.innerText = '⚠️ WASM 로드 실패 (웹 서버 필요)';
+            badge.style.color = '#ff8a80';
+          }
+        });
+      }
+    }
+
+    function sendWasmCmd(cmd) {
+      if (wasmWorker) {
+        wasmWorker.postMessage(cmd);
+      } else if (wasmEngine) {
+        wasmEngine.postMessage(cmd);
+      }
+    }
+
+    function handleWasmOutput(line) {
+      if (!line || typeof line !== 'string') return;
+      line = line.trim();
+
+      if (line === 'readyok' || line.includes('readyok')) {
+        wasmReady = true;
+        const badge = document.getElementById('engineStatusBadge');
+        if (badge) {
+          badge.innerText = '🟢 WASM AI 탑재됨 (서버 불필요)';
+          badge.style.color = '#69f0ae';
+          badge.style.borderColor = '#00c853';
+        }
+      }
+
+      // 실시간 수읽기 평가 점수 파싱
+      if (line.startsWith('info depth')) {
+        parseWasmInfo(line);
+      }
+
+      // 최선의 착수 반환
+      if (line.startsWith('bestmove')) {
+        const parts = line.split(' ');
+        const bestmove = parts[1];
+        if (wasmCallback) {
+          const cb = wasmCallback;
+          wasmCallback = null;
+          cb(bestmove, lastWasmEval);
+        }
+      }
+    }
+
+    function parseWasmInfo(line) {
+      let depth = null;
+      let scoreCp = null;
+      let mateIn = null;
+
+      const dMatch = line.match(/\bdepth\s+(\d+)/);
+      if (dMatch) depth = parseInt(dMatch[1], 10);
+
+      const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
+      if (cpMatch) scoreCp = parseInt(cpMatch[1], 10);
+
+      const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
+      if (mateMatch) mateIn = parseInt(mateMatch[1], 10);
+
+      if (scoreCp !== null || mateIn !== null) {
+        const isCho = currentTurn === 'b';
+        let choScoreCp = 0;
+        let choMate = null;
+
+        if (mateIn !== null) {
+          const raw = (3000 - Math.abs(mateIn) * 50) * (mateIn > 0 ? 1 : -1);
+          choScoreCp = isCho ? raw : -raw;
+          choMate = isCho ? mateIn : -mateIn;
+        } else {
+          choScoreCp = isCho ? scoreCp : -scoreCp;
+        }
+
+        const choWinProb = 100 / (1 + Math.exp(-0.003 * choScoreCp));
+        lastWasmEval = {
+          step: moveHistory.length + 1,
+          depth,
+          scoreCp,
+          choScoreCp,
+          choPoints: choScoreCp / 100,
+          choWinProb,
+          mateIn: choMate
+        };
+        updateAiEvalBadge(lastWasmEval);
+      }
+    }
+
+    function onAiSideChange() {
+      const sel = document.getElementById('aiSideSelect');
+      aiSide = sel ? sel.value : 'w';
+      if (aiSide === 'none') {
+        showToast('👤 수동 기보 입력 모드 (양쪽 직접 착수)');
+      } else if (aiSide === 'w') {
+        showToast('🔵 내가 초(선공) vs 🤖 스톡피쉬 한(후공) 설정됨');
+      } else if (aiSide === 'b') {
+        showToast('🔴 내가 한(후공) vs 🤖 스톡피쉬 초(선공) 설정됨');
+      } else if (aiSide === 'both') {
+        showToast('🤖 스톡피쉬 vs 스톡피쉬 연속 자동 대국 모드');
+      }
+
+      if (appMode === 'play' && (aiSide === currentTurn || aiSide === 'both')) {
+        setTimeout(() => requestStockfishMove(), 250);
+      }
+    }
+
+    function updateAiEvalBadge(data) {
+      const badge = document.getElementById('liveAiScoreBadge');
+      if (!badge || !data) return;
+      if (data.mateIn !== null && data.mateIn !== undefined) {
+        const who = data.choScoreCp > 0 ? '초' : '한';
+        badge.innerText = `AI 평가: 🔥 ${who} ${Math.abs(data.mateIn)}수 내 외통`;
+        badge.style.color = '#ffab40';
+      } else {
+        const pts = Number(data.choPoints || 0);
+        const sign = pts > 0 ? '+' : '';
+        const prob = Number(data.choWinProb || 50).toFixed(1);
+        badge.innerText = `AI 평가: 초 ${sign}${pts.toFixed(1)}점 (승률 ${prob}%)`;
+        badge.style.color = pts >= 0 ? '#82b1ff' : '#ff8a80';
+      }
+    }
+
+    async function requestStockfishMove(forceOnce = false) {
+      if (isAiThinking) return;
+      if (!wasmReady) {
+        // 엔진 로딩 전이면 무한 대기에 빠지지 않도록 잠시 후 재시도
+        showToast('⏳ AI 엔진 로딩 중... 잠시 후 자동으로 착수합니다');
+        setTimeout(() => requestStockfishMove(forceOnce), 700);
+        return;
+      }
+      if (!forceOnce && aiSide !== 'both' && currentTurn !== aiSide) {
+        console.warn(`[AI 착수 차단] 현재 차례(${currentTurn})는 AI(${aiSide})의 차례가 아닙니다.`);
+        return;
+      }
+      if (appMode !== 'play') {
+        setMode('play');
+      }
+
+      const depth = parseInt(document.getElementById('aiDepthSelect')?.value || '10', 10);
+      const variant = document.getElementById('aiVariantSelect')?.value || 'janggimodern';
+      const btn = document.getElementById('btnAiMoveNow');
+
+      isAiThinking = true;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = '⏳ AI 수읽기 중...';
+      }
+      const requestStartTime = Date.now();
+
+      sendWasmCmd('stop');
+      sendWasmCmd('setoption name UCI_Variant value ' + variant);
+      sendWasmCmd('position fen ' + getBoardFen());
+
+      wasmCallback = async (bestmove, evalMeta) => {
+        // 자연스러운 대국 템포를 위해 최소 1초(1000ms) 대기
+        const elapsed = Date.now() - requestStartTime;
+        const remainingDelay = Math.max(0, 1000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise(resolve => setTimeout(resolve, remainingDelay));
+        }
+
+        isAiThinking = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = '⚡ AI 1수 두기';
+        }
+
+        if (!bestmove || bestmove === '(none)' || bestmove === 'none') {
+          const winner = currentTurn === 'b' ? '한(漢)' : '초(楚)';
+          showToast(`🏆 외통수(장군 빅/외통)! ${winner} 승리!`);
+          return;
+        }
+
+        const trimmedMove = bestmove.trim().toLowerCase();
+        const match = trimmedMove.match(/^([a-i](?:10|[1-9]))([a-i](?:10|[1-9]))$/i);
+        if (!match || trimmedMove === '0000') {
+          passTurn(evalMeta);
+        } else {
+          const from = fromUciSquare(match[1]);
+          const to = fromUciSquare(match[2]);
+          if (from.col === to.col && from.row === to.row) {
+            passTurn(evalMeta);
+          } else {
+            const movingPiece = board[from.row]?.[from.col];
+            if (!movingPiece) {
+              console.warn(`[스톡피쉬 좌표 불일치] AI 추천수 ${bestmove}의 출발점(${match[1]})에 기물이 없습니다.`);
+              return;
+            }
+            const moverTeam = currentTurn === 'b' ? 'cho' : 'han';
+            const pieceTeam = movingPiece === movingPiece.toLowerCase() ? 'cho' : 'han';
+            if (pieceTeam !== moverTeam) {
+              console.error(`[스톡피쉬 턴 불일치 차단] 현재 ${moverTeam} 차례인데 AI가 ${pieceTeam} 기물(${movingPiece})을 움직이려 했습니다.`);
+              return;
+            }
+            if (!isLegalPieceMove(board, from.col, from.row, to.col, to.row, moverTeam)) {
+              console.error(`[스톡피쉬 규칙 위반] AI 추천수 ${bestmove}는 장기 규칙상 비합법수입니다.`);
+              return;
+            }
+            executeMove(from, to, evalMeta);
+          }
+        }
+      };
+
+      sendWasmCmd('go depth ' + depth);
+    }
+
+    function buildGameDataPayload() {
+      const uciMoves = moveHistory.map(m => m.uci);
+      const evalHistory = moveHistory.map((m, idx) => m.evalEntry || {
+        step: idx + 1,
+        choScoreCp: 0,
+        choPoints: 0.0,
+        choWinProb: 50.0,
+        mateIn: null
+      });
+      const variant = document.getElementById('aiVariantSelect')?.value || 'janggimodern';
+      const depth = parseInt(document.getElementById('aiDepthSelect')?.value || '10', 10);
+
+      return {
+        title: "장기 판편집 & 스톡피쉬 대국 기보",
+        createdAt: new Date().toISOString(),
+        initialFen: initialFen || getBoardFen(),
+        moveCount: moveHistory.length,
+        moves: uciMoves,
+        koreanMoves: moveHistory.map(m => `${m.step}. ${m.korean}`),
+        evalHistory,
+        matchMeta: {
+          choEngine: aiSide === 'b' || aiSide === 'both' ? `Fairy-Stockfish (depth ${depth})` : 'Human Player (초)',
+          hanEngine: aiSide === 'w' || aiSide === 'both' ? `Fairy-Stockfish (depth ${depth})` : 'Human Player (한)',
+          variant,
+          endReason: "대국 기보 저장",
+          winner: "진행/완료"
+        }
+      };
+    }
+
+    async function autoSaveIfEnabled() {
+      const chk = document.getElementById('chkAutoSaveServer');
+      if (!chk || !chk.checked || moveHistory.length === 0) return;
+      try {
+        const payload = buildGameDataPayload();
+        payload.runBranchAnalyzer = false;
+        await fetch(`${API_BASE}/api/save-kifu`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {
+        // 무시 (오프라인 시)
+      }
+    }
+
+    async function saveToProjectServer(runBranchAnalyzer = false) {
+      if (moveHistory.length === 0) {
+        showToast('⚠️ 저장할 수순(기보)이 없습니다! 먼저 1수 이상 착수하세요.');
+        return;
+      }
+      const isServerOk = serverConnected || await checkServerConnection();
+      if (!isServerOk) {
+        showToast('⚠️ 로컬 서버 오프라인: 다운로드 파일로 대신 저장합니다.');
+        downloadGameJson();
+        return;
+      }
+
+      try {
+        showToast(runBranchAnalyzer ? '🎬 기보 저장 및 영상 데이터(branch_analyzer) 생성 중...' : '💾 프로젝트 game_sample.json에 기보 저장 중...');
+        const payload = buildGameDataPayload();
+        payload.runBranchAnalyzer = runBranchAnalyzer;
+
+        const res = await fetch(`${API_BASE}/api/save-kifu`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data && data.ok) {
+          if (runBranchAnalyzer) {
+            showToast('✅ game_sample.json 저장 & 영상용 데이터 동기화 완료!');
+          } else {
+            showToast('✅ game_sample.json 및 kifu_logs에 즉시 저장 완료!');
+          }
+        } else {
+          showToast(`❌ 저장 오류: ${data.error || '알 수 없는 오류'}`);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('❌ 서버 저장 중 오류가 발생했습니다.');
+      }
+    }
+
+    // ==========================================
+    // 8. 기보 목록 및 내보내기 뷰 갱신
+    // ==========================================
+    function updateKifuView() {
+      document.getElementById('moveCount').innerText = `${moveHistory.length}수`;
+
+      const tbody = document.getElementById('kifuBody');
+      tbody.innerHTML = "";
+
+      moveHistory.forEach((m, idx) => {
+        const tr = document.createElement('tr');
+        if (idx === moveHistory.length - 1) tr.classList.add('current-step');
+
+        const evalBadge = m.evalEntry
+          ? `<span style="font-size:11px; color:#82b1ff; margin-left:4px;">(${m.evalEntry.choPoints >= 0 ? '+' : ''}${Number(m.evalEntry.choPoints).toFixed(1)})</span>`
+          : '';
+
+        tr.innerHTML = `
+          <td>${m.step}</td>
+          <td><span class="${m.team === 'b' ? 'badge-cho' : 'badge-han'}">${m.team === 'b' ? '초(楚)' : '한(漢)'}</span></td>
+          <td>${m.korean}${evalBadge}</td>
+          <td><code>${m.uci}</code></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // 스크롤 맨 아래로 이동
+      const historyDiv = document.getElementById('kifuHistory');
+      historyDiv.scrollTop = historyDiv.scrollHeight;
+
+      renderExportText();
+    }
+
+    function setExportTab(tab) {
+      currentExportTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      if (event && event.target) event.target.classList.add('active');
+      renderExportText();
+    }
+
+    function renderExportText() {
+      const box = document.getElementById('exportBox');
+      const uciMoves = moveHistory.map(m => m.uci);
+
+      if (currentExportTab === 'json') {
+        const gameData = buildGameDataPayload();
+        box.value = JSON.stringify(gameData, null, 2);
+      } else if (currentExportTab === 'uci') {
+        box.value = uciMoves.join(' ');
+      } else if (currentExportTab === 'fen') {
+        box.value = getBoardFen();
+      }
+    }
+
+    // ==========================================
+    // 9. 클립보드 복사 & 다운로드
+    // ==========================================
+    function copyCurrentExport() {
+      const box = document.getElementById('exportBox');
+      box.select();
+      navigator.clipboard.writeText(box.value);
+      showToast('클립보드에 복사되었습니다! ✨');
+    }
+
+    function copyKifuJson() {
+      setExportTab('json');
+      copyCurrentExport();
+    }
+
+    function downloadGameJson() {
+      const gameData = buildGameDataPayload();
+      const blob = new Blob([JSON.stringify(gameData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `janggi_kifu_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('game.json 파일이 다운로드되었습니다! 💾');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toastMsg');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // 초기 실행
+    window.onload = () => {
+      initDefaultBoard();
+      initWasmEngine();
+    };
+  </script>
+  <footer style="text-align:center;padding:14px 12px 20px;font-size:0.75rem;color:#94a3b8;border-top:1px solid #333852;margin-top:12px;">
+    AI 엔진: <a href="https://github.com/fairy-stockfish/fairy-stockfish.wasm" target="_blank" rel="noopener" style="color:#60a5fa;">Fairy-Stockfish (WebAssembly)</a>
+    © Fabian Fichter 외 기여자 · <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener" style="color:#60a5fa;">GPL-3.0</a> 라이선스
+  </footer>
+</body>
 </html>
