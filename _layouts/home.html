@@ -2,115 +2,206 @@
 layout: default
 ---
 
+<style>
+  .blog-section-wrap {
+    max-width: 980px;
+    margin: 0 auto 3rem;
+    padding: 0 0.5rem;
+    font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .blog-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 2px solid #f1f5f9;
+  }
+
+  .blog-section-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  .modern-post-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .modern-post-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1.15rem 1.35rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  }
+
+  .modern-post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+    border-color: #cbd5e1;
+  }
+
+  .modern-post-meta {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #2563eb;
+    background: #eff6ff;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-bottom: 0.4rem;
+  }
+
+  .modern-post-title {
+    font-size: 1.08rem;
+    font-weight: 800;
+    margin: 0 0 0.35rem 0;
+    line-height: 1.4;
+  }
+
+  .modern-post-title a {
+    color: #0f172a;
+    text-decoration: none;
+  }
+
+  .modern-post-title a:hover {
+    color: #2563eb;
+  }
+
+  .modern-post-excerpt {
+    font-size: 0.88rem;
+    color: #475569;
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .modern-post-excerpt p {
+    margin: 0;
+  }
+</style>
+
 <div class="home">
   {{ content }}
 
-  <h2 class="post-list-heading">최신 글</h2>
-  <ul class="post-list">
-    {%- for post in paginator.posts -%}
-    <li>
-      {%- assign date_format = site.minima.date_format | default: "%Y-%m-%d" -%}
-      <span class="post-meta">{{ post.date | date: date_format }}</span>
-      <h3>
-        <a class="post-link" href="{{ post.url | relative_url }}">
-          {{ post.title | escape }}
-        </a>
-      </h3>
-      {{ post.excerpt }}
-    </li>
-    {%- endfor -%}
-  </ul>
+  <div class="blog-section-wrap">
+    <div class="blog-section-header">
+      <h2 class="blog-section-title">📝 최신 블로그 기록</h2>
+    </div>
 
-  <nav aria-label="Page navigation" class="mt-4">
-    <ul class="pagination justify-content-center">
-      {% if paginator.previous_page %}
-        <li class="page-item">
-          <a class="page-link" href="{{ paginator.previous_page_path | relative_url }}" aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span>
+    <ul class="modern-post-list">
+      {%- for post in paginator.posts -%}
+      <li class="modern-post-card">
+        {%- assign date_format = site.minima.date_format | default: "%Y-%m-%d" -%}
+        <span class="modern-post-meta">📅 {{ post.date | date: date_format }}</span>
+        <h3 class="modern-post-title">
+          <a href="{{ post.url | relative_url }}">
+            {{ post.title | escape }}
           </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link" aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span>
-          </span>
-        </li>
-      {% endif %}
-
-      {% comment %} How many pages to show before/after current {% endcomment %}
-      {% assign num_pages_to_show_around_current = 2 %} 
-      {% assign min_page_to_show = paginator.page | minus: num_pages_to_show_around_current %}
-      {% assign max_page_to_show = paginator.page | plus: num_pages_to_show_around_current %}
-
-      {% assign first_ellipsis_shown = false %}
-      {% assign last_ellipsis_shown = false %}
-
-      {% for page_num in (1..paginator.total_pages) %}
-        {% assign should_show_page = false %}
-        
-        {% assign is_current_page = false %}
-        {% if page_num == paginator.page %}{% assign is_current_page = true %}{% endif %}
-        
-        {% assign is_first_page = false %}
-        {% if page_num == 1 %}{% assign is_first_page = true %}{% endif %}
-        
-        {% assign is_last_page = false %}
-        {% if page_num == paginator.total_pages %}{% assign is_last_page = true %}{% endif %}
-        
-        {% if is_first_page or is_last_page or is_current_page %}
-          {% assign should_show_page = true %}
-        {% elsif page_num >= min_page_to_show and page_num <= max_page_to_show %}
-          {% assign should_show_page = true %}
-        {% endif %}
-
-        {% if should_show_page %}
-          {% if is_current_page %}
-            <li class="page-item active" aria-current="page">
-              <span class="page-link">{{ page_num }}</span>
-            </li>
-          {% else %}
-            <li class="page-item">
-              {% if is_first_page %}
-                <a class="page-link" href="{{ '/' | relative_url }}">{{ page_num }}</a>
-              {% else %}
-                <a class="page-link" href="{{ site.baseurl }}/blog/page{{ page_num }}/">{{ page_num }}</a>
-              {% endif %}
-            </li>
-          {% endif %}
-        {% else %}
-          {% comment %} Render ellipsis {% endcomment %}
-          {% assign needs_first_ellipsis = false %}
-          {% if page_num < paginator.page and first_ellipsis_shown == false and page_num > 1 %}
-            {% assign needs_first_ellipsis = true %}
-          {% endif %}
-
-          {% assign needs_last_ellipsis = false %}
-          {% if page_num > paginator.page and last_ellipsis_shown == false and page_num < paginator.total_pages %}
-            {% assign needs_last_ellipsis = true %}
-          {% endif %}
-          
-          {% if needs_first_ellipsis or needs_last_ellipsis %}
-            <li class="page-item disabled"><span class="page-link">...</span></li>
-            {% if needs_first_ellipsis %}{% assign first_ellipsis_shown = true %}{% endif %}
-            {% if needs_last_ellipsis %}{% assign last_ellipsis_shown = true %}{% endif %}
-          {% endif %}
-        {% endif %}
-      {% endfor %}
-
-      {% if paginator.next_page %}
-        <li class="page-item">
-          <a class="page-link" href="{{ paginator.next_page_path | relative_url }}" aria-label="Next">
-            <span aria-hidden="true">&raquo;</span>
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link" aria-label="Next">
-            <span aria-hidden="true">&raquo;</span>
-          </span>
-        </li>
-      {% endif %}
+        </h3>
+        <div class="modern-post-excerpt">
+          {{ post.excerpt }}
+        </div>
+      </li>
+      {%- endfor -%}
     </ul>
-  </nav>
 
+    <nav aria-label="Page navigation" class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if paginator.previous_page %}
+          <li class="page-item">
+            <a class="page-link" href="{{ paginator.previous_page_path | relative_url }}" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </span>
+          </li>
+        {% endif %}
+
+        {% assign num_pages_to_show_around_current = 2 %} 
+        {% assign min_page_to_show = paginator.page | minus: num_pages_to_show_around_current %}
+        {% assign max_page_to_show = paginator.page | plus: num_pages_to_show_around_current %}
+
+        {% assign first_ellipsis_shown = false %}
+        {% assign last_ellipsis_shown = false %}
+
+        {% for page_num in (1..paginator.total_pages) %}
+          {% assign should_show_page = false %}
+          
+          {% assign is_current_page = false %}
+          {% if page_num == paginator.page %}{% assign is_current_page = true %}{% endif %}
+          
+          {% assign is_first_page = false %}
+          {% if page_num == 1 %}{% assign is_first_page = true %}{% endif %}
+          
+          {% assign is_last_page = false %}
+          {% if page_num == paginator.total_pages %}{% assign is_last_page = true %}{% endif %}
+          
+          {% if is_first_page or is_last_page or is_current_page %}
+            {% assign should_show_page = true %}
+          {% elsif page_num >= min_page_to_show and page_num <= max_page_to_show %}
+            {% assign should_show_page = true %}
+          {% endif %}
+
+          {% if should_show_page %}
+            {% if is_current_page %}
+              <li class="page-item active" aria-current="page">
+                <span class="page-link">{{ page_num }}</span>
+              </li>
+            {% else %}
+              <li class="page-item">
+                {% if is_first_page %}
+                  <a class="page-link" href="{{ '/' | relative_url }}">{{ page_num }}</a>
+                {% else %}
+                  <a class="page-link" href="{{ site.baseurl }}/blog/page{{ page_num }}/">{{ page_num }}</a>
+                {% endif %}
+              </li>
+            {% endif %}
+          {% else %}
+            {% assign needs_first_ellipsis = false %}
+            {% if page_num < paginator.page and first_ellipsis_shown == false and page_num > 1 %}
+              {% assign needs_first_ellipsis = true %}
+            {% endif %}
+
+            {% assign needs_last_ellipsis = false %}
+            {% if page_num > paginator.page and last_ellipsis_shown == false and page_num < paginator.total_pages %}
+              {% assign needs_last_ellipsis = true %}
+            {% endif %}
+            
+            {% if needs_first_ellipsis or needs_last_ellipsis %}
+              <li class="page-item disabled"><span class="page-link">...</span></li>
+              {% if needs_first_ellipsis %}{% assign first_ellipsis_shown = true %}{% endif %}
+              {% if needs_last_ellipsis %}{% assign last_ellipsis_shown = true %}{% endif %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+
+        {% if paginator.next_page %}
+          <li class="page-item">
+            <a class="page-link" href="{{ paginator.next_page_path | relative_url }}" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </span>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
 </div>

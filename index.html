@@ -1,63 +1,464 @@
 ---
-# Feel free to add content and custom Front Matter to this file.
-# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-
 layout: home
-description: 개인 프로젝트, 특히 배달 및 퀵서비스 업무 효율화와 관련된 개발 기록을 공유하는 블로그입니다.
+description: 나혼자 레벨업 장기 AI 대국 및 배달·퀵서비스 업무 효율화 웹앱 포털 & 개발 블로그입니다.
 ---
 
-<div class="container my-5">
-  <div class="p-5 text-center bg-body-tertiary rounded-3">
-    <h1 class="text-body-emphasis">안녕하세요!</h1>
-    <p class="col-lg-8 mx-auto fs-5 text-muted">
-      이곳은 저의 개인 블로그 및 포트폴리오 공간입니다. 다양한 프로젝트와 생각들을 기록하고 공유합니다.
-    </p>
+<style>
+  /* 앱 포털 대시보드 커스텀 스타일 */
+  .portal-wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 1.2rem 0.5rem 2.5rem;
+    font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  /* 1. 상단 컴팩트 인트로 배너 */
+  .portal-intro {
+    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    border: 1px solid #dbeafe;
+    border-radius: 18px;
+    padding: 1.5rem 1.6rem;
+    margin-bottom: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
+  }
+
+  .portal-intro-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 0.76rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .portal-intro-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 0.35rem 0;
+    letter-spacing: -0.02em;
+  }
+
+  .portal-intro-desc {
+    font-size: 0.94rem;
+    color: #475569;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* 섹션 타이틀 */
+  .portal-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 2px solid #f1f5f9;
+  }
+
+  .portal-section-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .portal-section-sub {
+    font-size: 0.82rem;
+    color: #64748b;
+    font-weight: 600;
+  }
+
+  /* 2. 대표 추천 웹앱 (Hero Card - 나혼자 레벨업 장기) */
+  .hero-app-card {
+    position: relative;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 65%, #172554 100%);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 20px;
+    padding: 1.75rem 1.8rem;
+    margin-bottom: 1.5rem;
+    color: #f8fafc;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.22);
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .hero-app-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.3);
+  }
+
+  .hero-top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-badge-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 0.65rem;
+  }
+
+  .hero-tag {
+    font-size: 0.74rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .hero-tag.gold {
+    background: rgba(245, 158, 11, 0.2);
+    color: #ffd166;
+    border-color: rgba(245, 158, 11, 0.5);
+  }
+
+  .hero-app-title {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 0.45rem 0;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hero-app-title a {
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .hero-app-desc {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 680px;
+  }
+
+  .hero-feature-pills {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    margin-top: 0.2rem;
+  }
+
+  .hero-feature-item {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 8px 11px;
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    font-weight: 600;
+  }
+
+  .hero-feature-item strong {
+    display: block;
+    color: #ffd166;
+    font-size: 0.82rem;
+    margin-bottom: 2px;
+  }
+
+  .hero-cta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-top: 0.4rem;
+  }
+
+  .btn-hero-launch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #0f172a !important;
+    font-weight: 800;
+    font-size: 0.98rem;
+    padding: 11px 22px;
+    border-radius: 12px;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
+    transition: transform 0.15s ease, filter 0.15s ease;
+  }
+
+  .btn-hero-launch:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+    color: #0f172a !important;
+  }
+
+  /* 3. 스마트 업무 도구 3열 카드 그리드 */
+  .app-launcher-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(275px, 1fr));
+    gap: 1.15rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .app-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.35rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  }
+
+  .app-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.09);
+    border-color: #93c5fd;
+  }
+
+  .app-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 0.65rem;
+  }
+
+  .app-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.45rem;
+    flex-shrink: 0;
+  }
+
+  .app-icon-box.blue {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+  }
+
+  .app-icon-box.emerald {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+  }
+
+  .app-icon-box.purple {
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+  }
+
+  .app-card-category {
+    font-size: 0.73rem;
+    font-weight: 800;
+    color: #2563eb;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .app-card-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .app-card-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .app-card-desc {
+    font-size: 0.88rem;
+    color: #475569;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .app-card-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 9px 14px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #0f172a !important;
+    font-size: 0.86rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .app-card:hover .app-card-btn {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff !important;
+  }
+
+  @media (max-width: 640px) {
+    .portal-intro {
+      padding: 1.15rem 1.2rem;
+    }
+    .portal-intro-title {
+      font-size: 1.22rem;
+    }
+    .hero-app-card {
+      padding: 1.3rem 1.25rem;
+    }
+    .hero-app-title {
+      font-size: 1.3rem;
+    }
+    .btn-hero-launch {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="portal-wrap" id="projects">
+  <!-- 1. 상단 컴팩트 런처 인트로 -->
+  <div class="portal-intro">
+    <div>
+      <span class="portal-intro-badge">⚡ THIS ONE · SMART WEB APPS &amp; BLOG</span>
+      <h1 class="portal-intro-title">나만의 웹앱 런처 &amp; 개발 기록</h1>
+      <p class="portal-intro-desc">
+        스마트폰과 PC 어디서나 설치 없이 1초 만에 바로 실행하는 실전 웹 도구와 현장 기록을 공유합니다.
+      </p>
+    </div>
   </div>
-</div>
 
+  <!-- 2. 웹앱 런처 대시보드 -->
+  <div class="portal-section-header">
+    <h2 class="portal-section-title">🚀 바로 실행하는 웹앱</h2>
+    <span class="portal-section-sub">터치하면 즉시 실행됩니다</span>
+  </div>
 
-
-<div class="container px-4 py-5" id="projects">
-  <h2 class="pb-2 border-bottom">프로젝트</h2>
-  <div class="row row-cols-1 row-cols-md-2 align-items-md-center g-5 py-5">
-    <div class="col d-flex flex-column align-items-start gap-2">
-      <h3 class="fw-bold">
-        <a href="/apps/janggi/" class="text-decoration-none">장기 FEN 변환기</a>
+  <!-- 대표 추천 앱: 나혼자 레벨업 장기 -->
+  <div class="hero-app-card">
+    <div>
+      <div class="hero-badge-group">
+        <span class="hero-tag gold">🏆 대표 프로젝트 · 대규모 업데이트</span>
+        <span class="hero-tag">🤖 Fairy-Stockfish WASM</span>
+        <span class="hero-tag">📱 모바일 최적화</span>
+      </div>
+      <h3 class="hero-app-title">
+        <a href="/apps/janggi/">♟️ 나혼자 레벨업 장기</a>
       </h3>
-      <p class="text-muted">
-        장기 기보나 특정 상황을 FEN(Forsyth-Edwards Notation) 문자열로 손쉽게 변환하고 편집할 수 있는 웹 도구입니다. 장기판 위에서 기물을 직접 배치하고 FEN 코드를 생성하거나 복사할 수 있습니다.
+      <p class="hero-app-desc">
+        18급 입문자부터 장기신(神)까지! 대국에서 승리할 때마다 한 단계씩 강해지는 <strong>20단계 스톡피쉬 AI 승급전</strong>에 도전하세요.
+        대국 후 내가 갑자기 불리해진 <strong>패착 지점을 자동 포착</strong>해 그 순간부터 다시 두거나, <strong>Depth 15 AI 최선수 정답 수순</strong>을 장기판 위에서 자동 재현할 수 있습니다.
       </p>
-      <a href="/apps/janggi/" class="btn btn-primary btn-lg">바로가기</a>
     </div>
 
-    <div class="col d-flex flex-column align-items-start gap-2">
-      <h3 class="fw-bold">
-        <a href="/apps/juso/" class="text-decoration-none">주소 분석 도구</a>
-      </h3>
-      <p class="text-muted">
-        퀵서비스 및 배달 기사님들을 위해, 여러 도시에 중복으로 존재하는 동 이름, 존재하지 않는 동 이름 등을 분석하고, 배달 앱에서 활용할 수 있는 제외지 목록을 자동으로 생성해주는 도구입니다.
-      </p>
-      <a href="/apps/juso/" class="btn btn-primary btn-lg">바로가기</a>
+    <div class="hero-feature-pills">
+      <div class="hero-feature-item">
+        <strong>🏆 20단계 레벨업 대국</strong>
+        18급~장기신 맞춤형 AI 난이도
+      </div>
+      <div class="hero-feature-item">
+        <strong>🎯 패착 포착 &amp; 복기</strong>
+        점수 급락 지점 이어두기·D15 정답
+      </div>
+      <div class="hero-feature-item">
+        <strong>♟️ 내 상차림 자동 기억</strong>
+        초·한 2단계 포진 설정 &amp; 진영교대
+      </div>
+      <div class="hero-feature-item">
+        <strong>🧩 판편집 &amp; FEN·기보함</strong>
+        수동 기물 배치 및 기보 백업/복원
+      </div>
     </div>
 
-    <div class="col d-flex flex-column align-items-start gap-2">
-      <h3 class="fw-bold">
-        <a href="/apps/quickclip/" class="text-decoration-none">QuickClip - 나만의 복사 붙여넣기</a>
-      </h3>
-      <p class="text-muted">
-        자주 사용하는 텍스트(코드 조각, 링크, 인사말 등)를 저장해두고 필요할 때 빠르게 복사해서 사용할 수 있는 '나만의 복사-붙여넣기' 도구입니다.
-      </p>
-      <a href="/apps/quickclip/" class="btn btn-primary btn-lg">바로가기</a>
+    <div class="hero-cta-row">
+      <a href="/apps/janggi/" class="btn-hero-launch">⚔️ 나혼자 레벨업 장기 시작하기 →</a>
+    </div>
+  </div>
+
+  <!-- 업무 효율화 웹앱 3종 그리드 -->
+  <div class="app-launcher-grid">
+    <!-- 주소 분석 도구 -->
+    <div class="app-card">
+      <div>
+        <div class="app-card-top">
+          <div class="app-icon-box blue">📍</div>
+          <div>
+            <span class="app-card-category">배달 · 퀵서비스 필수 도구</span>
+            <h3 class="app-card-title">
+              <a href="/apps/juso/">주소 분석 도구</a>
+            </h3>
+          </div>
+        </div>
+        <p class="app-card-desc">
+          여러 도시에 중복으로 존재하는 동 이름과 존재하지 않는 동 이름을 분석하고, 인성·배달 앱에서 바로 활용할 수 있는 제외지 목록을 자동 생성합니다.
+        </p>
+      </div>
+      <a href="/apps/juso/" class="app-card-btn">주소 분석 도구 열기 →</a>
     </div>
 
-    <div class="col d-flex flex-column align-items-start gap-2">
-      <h3 class="fw-bold">
-        <a href="/apps/fee-calculator/" class="text-decoration-none">퀵서비스 수수료 역산기</a>
-      </h3>
-      <p class="text-muted">
-        수수료를 뺀 최종 금액만 보고 원래 운임이 얼마였는지 헷갈리시나요? 다양한 수수료율에 따른 원래 운임을 한 번에 계산해주는 도구입니다.
-      </p>
-      <a href="/apps/fee-calculator/" class="btn btn-primary btn-lg">바로가기</a>
+    <!-- QuickClip -->
+    <div class="app-card">
+      <div>
+        <div class="app-card-top">
+          <div class="app-icon-box emerald">📋</div>
+          <div>
+            <span class="app-card-category">초고속 상용구 클립보드</span>
+            <h3 class="app-card-title">
+              <a href="/apps/quickclip/">QuickClip · 복사 붙여넣기</a>
+            </h3>
+          </div>
+        </div>
+        <p class="app-card-desc">
+          매일 반복해서 입력하는 주소, 계좌번호, 인사말, 코드 조각을 저장해 두고 필요할 때 터치 한 번으로 빠르게 복사해 사용하는 나만의 클립보드입니다.
+        </p>
+      </div>
+      <a href="/apps/quickclip/" class="app-card-btn">QuickClip 열기 →</a>
+    </div>
+
+    <!-- 퀵서비스 수수료 역산기 -->
+    <div class="app-card">
+      <div>
+        <div class="app-card-top">
+          <div class="app-icon-box purple">🧮</div>
+          <div>
+            <span class="app-card-category">운임 · 정산 계산기</span>
+            <h3 class="app-card-title">
+              <a href="/apps/fee-calculator/">퀵서비스 수수료 역산기</a>
+            </h3>
+          </div>
+        </div>
+        <p class="app-card-desc">
+          수수료를 뺀 최종 입금 금액만 보고 원래 운임이 얼마였는지 헷갈릴 때, 다양한 수수료율에 따른 원래 운임을 한 번에 정확히 역산해 주는 도구입니다.
+        </p>
+      </div>
+      <a href="/apps/fee-calculator/" class="app-card-btn">수수료 역산기 열기 →</a>
     </div>
   </div>
 </div>
