@@ -2746,7 +2746,7 @@
     }
 
     // =========================================================================
-    // 5.5 200수 규정 도달, 연속 한수쉼 및 외통 불가 점수판정 (카카오장기 공식 규정)
+    // 5.5 200수 규정, 기물 10점 이하, 연속 한수쉼 및 점수판정 (카카오장기 공식 규정)
     // =========================================================================
     function checkGameEndByMoveLimitOrMaterial() {
       if (gameState !== 'playing') return false;
@@ -2756,7 +2756,23 @@
       const hanKingCheck = findKingCheckInfo(board, 'han');
       const isAnyInCheck = choKingCheck.inCheck || hanKingCheck.inCheck;
 
-      // 1) 200수 규정 도달 판정 (카카오장기 공식 규정)
+      const { cho, han } = calculateMaterialScores();
+      const choPieceScore = cho;
+      const hanPieceScore = Math.max(0, han - 1.5);
+
+      // 1) 기물 점수 10점 이하 판정 (카카오장기 & 한국장기 공인 규정: 200수가 아니어도 즉시 점수승)
+      // - 둘 중 한쪽이라도 순수 기물 점수가 10점 이하로 떨어진 경우
+      // - 초(선공)가 먼저 두었으므로 후수(한)까지 다 둔 상태(currentTurn === 'b') 보장
+      // - 장군이 걸려있는 경우 멍군 응수가 완료되어 장군이 풀릴 때까지 보장
+      if ((choPieceScore <= 10 || hanPieceScore <= 10) && currentTurn === 'b' && !isAnyInCheck) {
+        const sideNotice = (choPieceScore <= 10 && hanPieceScore <= 10)
+          ? '양측 10점 이하'
+          : (choPieceScore <= 10 ? '초 10점 이하' : '한 10점 이하');
+        endGameByScore(`기물 10점 이하 판정 (${sideNotice})`);
+        return true;
+      }
+
+      // 2) 200수 규정 도달 판정 (카카오장기 공식 규정)
       // - 초(선공)가 먼저 두었으므로 한(후공)의 100번째 수(총 200수)까지 완료 보장 (currentTurn === 'b' = 한나라 턴 종료 직후)
       // - 200수 시점에 장군이 걸려있으면 멍군 응수가 완료되어 장군이 풀릴 때까지 대국 연장
       if (totalMoves >= 200 && currentTurn === 'b' && !isAnyInCheck) {
@@ -2764,7 +2780,7 @@
         return true;
       }
 
-      // 2) 양자 연속 한수쉼 판정 (한국장기 공식 규정: 서로 1회씩 연속 쉼 시 점수 판정)
+      // 3) 양자 연속 한수쉼 판정 (한국장기 공식 규정: 서로 1회씩 연속 쉼 시 점수 판정)
       if (totalMoves >= 2) {
         const last1 = moveHistory[totalMoves - 1];
         const last2 = moveHistory[totalMoves - 2];
@@ -2776,7 +2792,7 @@
         }
       }
 
-      // 3) 외통 불가 국면 (양측 공격 기물 전멸 시 즉시 점수 판정)
+      // 4) 외통 불가 국면 (양측 공격 기물 전멸 시 즉시 점수 판정)
       if (isMatingMaterialExhausted() && !isAnyInCheck) {
         endGameByScore('기물 부족(외통 불가)');
         return true;
@@ -2817,7 +2833,7 @@
       if (isPlayerWin) {
         handlePlayerWinLevelUp(`${winnerLabel} 점수승`, 'score', reason);
       } else {
-        handlePlayerLossLadder('point_defeat');
+        handlePlayerLossLadder('point_defeat', reason);
         showToast(`🏆 대국 종료: ${winnerLabel} 점수승! ${scoreDetail}`);
       }
 
@@ -3370,7 +3386,7 @@
       if (modal) modal.classList.add('open');
     }
 
-    function openLossTrainingModal(prevInfo, newInfo, reason = 'defeat') {
+    function openLossTrainingModal(prevInfo, newInfo, reason = 'defeat', reasonDetail = '') {
       playSystemTrainingChime();
       const modal = document.getElementById('levelUpModal');
       const sheet = document.getElementById('systemModalSheet');
@@ -3394,7 +3410,7 @@
         badgeText = '🏳️ 대국 기권 (전략적 후퇴)';
       } else if (reason === 'point_defeat') {
         reasonTitle = '⚖️ [시스템 알림: 점수 판정패 & 난이도 보정]';
-        badgeText = '⚖️ 200수 점수 판정패';
+        badgeText = reasonDetail ? `⚖️ ${reasonDetail} · 점수패` : '⚖️ 점수 판정패';
       }
 
       if (titleEl) titleEl.innerText = reasonTitle;
@@ -3457,7 +3473,7 @@
       openBlunderModal();
     }
 
-    function handlePlayerLossLadder(reason = 'defeat') {
+    function handlePlayerLossLadder(reason = 'defeat', reasonDetail = '') {
       const prevInfo = {
         ...getLadderRankInfo(ladderState.depth, ladderState.skill),
         depth: ladderState.depth,
@@ -3494,7 +3510,7 @@
 
       // 패배/기권 팝업 오픈 (등급 아래에서 수련 안내)
       setTimeout(() => {
-        openLossTrainingModal(prevInfo, newInfo, reason);
+        openLossTrainingModal(prevInfo, newInfo, reason, reasonDetail);
       }, 450);
     }
 
