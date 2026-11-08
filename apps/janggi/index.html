@@ -1411,6 +1411,13 @@
       { level: 20, rank: '장기신', tier: '神',   depth: 12, skill: 20 }
     ];
 
+    // 적응형 사다리 래더 상태 (첫 시작: Depth 1, Skill 20)
+    let ladderState = {
+      depth: 1,
+      skill: 20,
+      maxDepth: 1,
+      maxSkill: 20
+    };
     let currentLevel = 1;
     let maxUnlockedLevel = 1;
 
@@ -2361,6 +2368,7 @@
         } else {
           document.getElementById('statusText').innerText = `🏆 외통수! ${winner} 승리!`;
           showToast(`🏆 외통수! ${winner} 승리!`);
+          handlePlayerLossLadder('checkmate');
         }
         updateAllUI();
         saveAutoState();
@@ -2603,6 +2611,7 @@
       gameState = 'ended';
       const winner = mySide === 'b' ? '🔴 한(AI)' : '🔵 초(AI)';
       document.getElementById('statusText').innerText = `🏳️ 기권 · ${winner} 승리!`;
+      handlePlayerLossLadder('resign');
       updateAllUI();
       saveAutoState();
       showToast(`🏳️ 기권하셨습니다. ${winner} 승리!`);
@@ -2781,74 +2790,168 @@
     }
 
     // =========================================================================
-    // 9. 스톡피쉬 WASM 엔진 연동 & 20단계 레벨업 시스템 (Depth 2~20 + Skill 7~20)
+    // 9. 스톡피쉬 WASM 엔진 연동 & 적응형 사다리 래더 시스템 (스마트 관문 & 수련)
     // =========================================================================
-    function getCurrentLevelConfig(lv = currentLevel) {
-      const idx = Math.max(0, Math.min(LEVEL_TABLE.length - 1, (lv || 1) - 1));
-      return LEVEL_TABLE[idx];
+    function getLadderRankInfo(depth, skill) {
+      if (depth === 1) {
+        if (skill === 20) return { rank: '12급', tier: 'E급 헌터', isBoss: true };
+        if (skill >= 10) return { rank: '14급', tier: 'E급 헌터', isBoss: false };
+        if (skill >= 5) return { rank: '16급', tier: 'E급 헌터', isBoss: false };
+        return { rank: '18급', tier: 'E급 헌터', isBoss: false };
+      }
+      if (depth === 2) {
+        if (skill === 20) return { rank: '1급', tier: 'D~C급 헌터', isBoss: true };
+        if (skill >= 15) return { rank: '3급', tier: 'C급 헌터', isBoss: false };
+        if (skill >= 10) return { rank: '6급', tier: 'D급 헌터', isBoss: false };
+        return { rank: '10급', tier: 'D급 헌터', isBoss: false };
+      }
+      if (depth === 3) {
+        if (skill === 20) return { rank: '3단', tier: 'A급 헌터', isBoss: true };
+        if (skill >= 10) return { rank: '2단', tier: 'A급 헌터', isBoss: false };
+        return { rank: '초단', tier: 'B급 헌터', isBoss: false };
+      }
+      if (depth === 4) return { rank: '4단', tier: 'S급 헌터', isBoss: skill === 20 };
+      if (depth === 5) return { rank: '5단', tier: 'S급 헌터', isBoss: skill === 20 };
+      if (depth === 6) return { rank: '6단', tier: 'S급 헌터', isBoss: skill === 20 };
+      if (depth === 7) return { rank: '7단', tier: '국가권력급', isBoss: skill === 20 };
+      if (depth === 8) return { rank: '8단', tier: '국가권력급', isBoss: skill === 20 };
+      if (depth === 9) return { rank: '9단', tier: '국가권력급', isBoss: skill === 20 };
+      return { rank: '장기신 (神)', tier: '👑 군주', isBoss: true };
+    }
+
+    function getCurrentLevelConfig() {
+      const info = getLadderRankInfo(ladderState.depth, ladderState.skill);
+      return {
+        level: ladderState.depth,
+        depth: ladderState.depth,
+        skill: ladderState.skill,
+        rank: info.rank,
+        tier: info.tier,
+        isBoss: info.isBoss
+      };
     }
 
     function updateLevelUI() {
-      const cfg = getCurrentLevelConfig(currentLevel);
-      const maxCfg = getCurrentLevelConfig(maxUnlockedLevel);
+      const info = getLadderRankInfo(ladderState.depth, ladderState.skill);
       const titleEl = document.getElementById('levelBadgeTitle');
       const subEl = document.getElementById('levelBadgeSub');
       const prevBtn = document.getElementById('btnPrevLevel');
       const nextBtn = document.getElementById('btnNextLevel');
 
       if (titleEl) {
-        titleEl.innerText = `🏆 Lv.${cfg.level} · ${cfg.rank} (${cfg.tier})`;
+        const bossTag = info.isBoss ? '🔥 [보스전]' : `💪 [수련 S.${ladderState.skill}]`;
+        titleEl.innerText = `🏆 Lv.${ladderState.depth} · ${info.rank} (${info.tier}) ${bossTag}`;
       }
       if (subEl) {
-        if (currentLevel === LEVEL_TABLE.length) {
-          subEl.innerText = `최종 단계 도달! · 최고 달성: Lv.${maxCfg.level} (${maxCfg.rank})`;
-        } else if (currentLevel === maxUnlockedLevel) {
-          subEl.innerText = `최고 달성: Lv.${maxCfg.level} (${maxCfg.rank}) · 이기면 Lv.${currentLevel + 1} 해금!`;
+        if (ladderState.skill === 20) {
+          subEl.innerText = `🔥 Depth ${ladderState.depth} 관문 보스 (Skill 20) · 이기면 즉시 Depth ${ladderState.depth + 1} 직행!`;
         } else {
-          subEl.innerText = `연습 대국 중 · 최고 달성: Lv.${maxCfg.level} (${maxCfg.rank})`;
+          subEl.innerText = `수련 진행 중: Depth ${ladderState.depth} (Skill ${ladderState.skill}/20) · 이기면 Skill ${ladderState.skill + 1} 승급!`;
         }
       }
       if (prevBtn) {
-        prevBtn.disabled = currentLevel <= 1;
+        prevBtn.disabled = ladderState.depth <= 1 && ladderState.skill <= (ladderState.depth === 1 ? 0 : 5);
       }
       if (nextBtn) {
-        if (currentLevel < maxUnlockedLevel) {
-          nextBtn.disabled = false;
-          nextBtn.innerText = '▶';
-        } else {
-          nextBtn.disabled = true;
-          nextBtn.innerText = currentLevel >= LEVEL_TABLE.length ? '👑' : '🔒';
-        }
+        const isMax = ladderState.depth >= ladderState.maxDepth && ladderState.skill >= ladderState.maxSkill;
+        nextBtn.disabled = isMax;
+        nextBtn.innerText = isMax ? '🔒' : '▶';
       }
     }
 
     function changeLevel(delta) {
-      const nextLv = currentLevel + delta;
-      if (nextLv < 1) return;
-      if (nextLv > maxUnlockedLevel) {
-        showToast(`🔒 Lv.${currentLevel} 대국에서 승리하면 다음 레벨이 열립니다!`);
-        return;
+      if (delta > 0) {
+        if (ladderState.skill < 20) {
+          ladderState.skill = Math.min(20, ladderState.skill + 1);
+        } else if (ladderState.depth < ladderState.maxDepth) {
+          ladderState.depth++;
+          ladderState.skill = 20;
+        } else {
+          showToast('🔒 대국에서 승리하면 다음 단계가 해금됩니다!');
+          return;
+        }
+      } else {
+        const minSkill = ladderState.depth === 1 ? 0 : 5;
+        if (ladderState.skill > minSkill) {
+          ladderState.skill = Math.max(minSkill, ladderState.skill - 1);
+        } else if (ladderState.depth > 1) {
+          ladderState.depth--;
+          ladderState.skill = 20;
+        } else {
+          return;
+        }
       }
-      currentLevel = nextLv;
-      const cfg = getCurrentLevelConfig(currentLevel);
+      currentLevel = ladderState.depth;
+      const info = getLadderRankInfo(ladderState.depth, ladderState.skill);
       updateLevelUI();
       saveAutoState();
-      showToast(`⚔️ 난이도 변경: Lv.${cfg.level} · ${cfg.rank} (${cfg.tier})`);
+      showToast(`⚔️ 난이도 변경: Depth ${ladderState.depth} · Skill ${ladderState.skill} (${info.rank})`);
     }
 
     function handlePlayerWinLevelUp(winnerLabel) {
-      if (currentLevel === maxUnlockedLevel && maxUnlockedLevel < LEVEL_TABLE.length) {
-        maxUnlockedLevel++;
-        currentLevel = maxUnlockedLevel;
-        const nextCfg = getCurrentLevelConfig(currentLevel);
-        document.getElementById('statusText').innerText = `🎉 승리! Lv.${nextCfg.level} (${nextCfg.rank}) 레벨업 달성!`;
-        showToast(`🎊 축하합니다! Lv.${nextCfg.level} · ${nextCfg.rank} (${nextCfg.tier}) 승급!`);
+      const prevDepth = ladderState.depth;
+
+      if (ladderState.skill === 20) {
+        // [1] 보스전(Skill 20) 승리! -> 즉시 다음 Depth의 최고봉(Skill 20)으로 직행!
+        if (ladderState.depth < 10) {
+          ladderState.depth++;
+          ladderState.skill = 20;
+          if (ladderState.depth > ladderState.maxDepth) {
+            ladderState.maxDepth = ladderState.depth;
+            ladderState.maxSkill = 20;
+          }
+          currentLevel = ladderState.depth;
+          maxUnlockedLevel = ladderState.maxDepth;
+          const newInfo = getLadderRankInfo(ladderState.depth, ladderState.skill);
+          document.getElementById('statusText').innerText = `⚡ 관문 돌파! Depth ${ladderState.depth} 보스전 직행!`;
+          showToast(`🎊 Depth ${prevDepth} 정복! 즉시 Depth ${ladderState.depth} (${newInfo.rank}) 보스전으로 직행합니다!`);
+        } else {
+          document.getElementById('statusText').innerText = `👑 최강의 그림자 군주(장기신) 정복!`;
+          showToast(`🏆 축하합니다! 세계 최강의 장기신을 꺾고 최고 칭호를 달성했습니다!`);
+        }
       } else {
-        const cfg = getCurrentLevelConfig(currentLevel);
-        document.getElementById('statusText').innerText = `🏆 외통수! ${winnerLabel} 승리! (Lv.${cfg.level} ${cfg.rank} 클리어)`;
-        showToast(`🏆 승리! Lv.${cfg.level} (${cfg.rank}) AI를 꺾었습니다!`);
+        // [2] 수련 단계 승리! -> 계단식으로 한 단계씩 레벨업 (Skill 5 -> 6 -> 7 -> 8 -> 9 -> 10 ...)
+        ladderState.skill = Math.min(20, ladderState.skill + 1);
+        if (ladderState.depth === ladderState.maxDepth && ladderState.skill > ladderState.maxSkill) {
+          ladderState.maxSkill = ladderState.skill;
+        }
+        currentLevel = ladderState.depth;
+        const newInfo = getLadderRankInfo(ladderState.depth, ladderState.skill);
+        if (ladderState.skill === 20) {
+          document.getElementById('statusText').innerText = `🔥 보스전 도달! Depth ${ladderState.depth} (Skill 20)`;
+          showToast(`⚔️ 수련 완성! Depth ${ladderState.depth} 관문 보스전(Skill 20)에 도전합니다!`);
+        } else {
+          document.getElementById('statusText').innerText = `🎉 승리! Depth ${ladderState.depth} · Skill ${ladderState.skill}/20 달성!`;
+          showToast(`💪 수련 승리! Skill ${ladderState.skill}/20 (${newInfo.rank}) 단계로 레벨업!`);
+        }
       }
+
       updateLevelUI();
+      saveAutoState();
+    }
+
+    function handlePlayerLossLadder(reason = 'defeat') {
+      if (ladderState.skill === 20) {
+        // [1] Skill 20 보스전에서 패배 -> Skill 10으로 하향하여 수련 모드 진입
+        ladderState.skill = 10;
+        showToast(`🛡️ 난이도 자동 보정: 적의 힘이 강하여 Depth ${ladderState.depth} (Skill 10) 수련 모드로 조정되었습니다.`);
+      } else if (ladderState.skill === 10) {
+        // [2] Skill 10에서도 패배 -> Skill 5로 하향하여 바닥 난이도 탐색
+        ladderState.skill = 5;
+        showToast(`🛡️ 난이도 자동 보정: 한 단계 낮추어 Skill 5부터 극복 수련을 시작합니다.`);
+      } else if (ladderState.skill <= 5) {
+        if (ladderState.depth === 1) {
+          // Depth 1 초보자 안전망: Skill 5에서도 지면 2, 0으로 내려가며 입문자 안착 지원
+          if (ladderState.skill > 0) {
+            ladderState.skill = Math.max(0, ladderState.skill - 2);
+            showToast(`🛡️ 입문자 안전망: Skill ${ladderState.skill} 모드로 조정되었습니다.`);
+          }
+        }
+      }
+
+      currentLevel = ladderState.depth;
+      updateLevelUI();
+      saveAutoState();
     }
 
     function initWasmEngine() {
@@ -3068,6 +3171,7 @@
         } else {
           document.getElementById('statusText').innerText = `🏆 외통수! ${winner} 승리!`;
           showToast(`🏆 대국 종료! ${winner} 승리!`);
+          handlePlayerLossLadder('checkmate');
         }
         updateAllUI();
         saveAutoState();
@@ -3444,8 +3548,9 @@
           moveHistory,
           currentPly,
           mySide,
-          currentLevel,
-          maxUnlockedLevel,
+          currentLevel: ladderState.depth,
+          maxUnlockedLevel: ladderState.maxDepth,
+          ladderState: { ...ladderState },
           choFormation: selectedChoFormation,
           hanFormation: selectedHanFormation
         };
@@ -3466,11 +3571,28 @@
         mySide = data.mySide === 'w' ? 'w' : 'b';
         isFlipped = (mySide === 'b');
 
-        if (typeof data.maxUnlockedLevel === 'number') {
-          maxUnlockedLevel = Math.max(1, Math.min(LEVEL_TABLE.length, data.maxUnlockedLevel));
-        }
-        if (typeof data.currentLevel === 'number') {
-          currentLevel = Math.max(1, Math.min(maxUnlockedLevel, data.currentLevel));
+        if (data.ladderState && typeof data.ladderState.depth === 'number') {
+          ladderState = {
+            depth: Math.max(1, Math.min(10, data.ladderState.depth)),
+            skill: Math.max(0, Math.min(20, data.ladderState.skill)),
+            maxDepth: Math.max(1, Math.min(10, data.ladderState.maxDepth || data.ladderState.depth)),
+            maxSkill: Math.max(0, Math.min(20, data.ladderState.maxSkill || data.ladderState.skill))
+          };
+          currentLevel = ladderState.depth;
+          maxUnlockedLevel = ladderState.maxDepth;
+        } else {
+          if (typeof data.maxUnlockedLevel === 'number') {
+            maxUnlockedLevel = Math.max(1, Math.min(10, data.maxUnlockedLevel));
+          }
+          if (typeof data.currentLevel === 'number') {
+            currentLevel = Math.max(1, Math.min(maxUnlockedLevel, data.currentLevel));
+          }
+          ladderState = {
+            depth: currentLevel,
+            skill: 20,
+            maxDepth: maxUnlockedLevel,
+            maxSkill: 20
+          };
         }
         if (data.choFormation) selectedChoFormation = data.choFormation;
         if (data.hanFormation) selectedHanFormation = data.hanFormation;
