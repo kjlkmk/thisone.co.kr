@@ -110,31 +110,20 @@
       flex-shrink: 0;
     }
 
-    .mode-switch {
-      display: flex;
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 3px;
-      gap: 2px;
-    }
-
-    .mode-btn {
-      border: none;
-      background: transparent;
-      color: var(--text-sub);
-      font-size: 0.76rem;
-      font-weight: 700;
-      padding: 5px 9px;
-      border-radius: 7px;
-      cursor: pointer;
+    .mode-toggle-btn {
       transition: all 0.15s ease;
     }
 
-    .mode-btn.active {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);
+    .mode-toggle-btn.play {
+      background: rgba(37, 99, 235, 0.2);
+      border-color: #3b82f6;
+      color: #93c5fd;
+    }
+
+    .mode-toggle-btn.edit {
+      background: rgba(245, 158, 11, 0.22);
+      border-color: #f59e0b;
+      color: #ffd166;
     }
 
     .menu-btn {
@@ -149,6 +138,8 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      white-space: nowrap;
+      user-select: none;
     }
 
     .menu-btn:active {
@@ -236,7 +227,7 @@
       padding-top: 8px;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
       gap: 6px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
     }
 
     .side-toggle {
@@ -623,19 +614,19 @@
     .bottom-controls {
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 5px;
       margin-top: auto;
     }
 
-    /* 1열: 뒤로 / 수순표시 / 앞으로 / 한수쉼 / 무르기 */
+    /* 1열: 처음 / 뒤로 / 수순표시 / 앞으로 / 한수쉼 / 무르기 */
     .nav-bar {
       display: grid;
-      grid-template-columns: 0.9fr 1.3fr 0.9fr 1fr 1fr;
-      gap: 5px;
+      grid-template-columns: 0.85fr 0.85fr 1.15fr 0.95fr 0.95fr 0.95fr;
+      gap: 3px;
       background: var(--bg-panel);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 6px;
+      border-radius: 8px;
+      padding: 4px;
       align-items: center;
     }
 
@@ -643,15 +634,16 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       color: var(--text-main);
-      font-size: 0.77rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      padding: 8px 4px;
-      border-radius: 7px;
+      padding: 5px 2px;
+      border-radius: 6px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 3px;
+      gap: 2px;
+      white-space: nowrap;
     }
 
     .nav-btn:disabled {
@@ -665,29 +657,29 @@
 
     .move-counter {
       text-align: center;
-      font-size: 0.76rem;
+      font-size: 0.70rem;
       font-weight: 700;
       color: var(--text-main);
       background: rgba(0, 0, 0, 0.28);
-      padding: 7px 4px;
-      border-radius: 6px;
+      padding: 5px 2px;
+      border-radius: 5px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    /* 2열: 게임시작 / 정지 / 기권 / 초기화 */
+    /* 2열: 게임시작 / 기권 / 새게임 */
     .action-bar {
       display: grid;
-      grid-template-columns: 1.25fr 0.9fr 0.9fr 1fr;
-      gap: 6px;
+      grid-template-columns: 1.2fr 0.9fr 1fr;
+      gap: 5px;
     }
 
     .main-btn {
       border: none;
-      border-radius: 10px;
-      padding: 11px 6px;
-      font-size: 0.82rem;
+      border-radius: 8px;
+      padding: 7px 4px;
+      font-size: 0.74rem;
       font-weight: 800;
       cursor: pointer;
       display: flex;
@@ -1158,10 +1150,7 @@
       </div>
 
       <div class="header-right">
-        <div class="mode-switch">
-          <button class="mode-btn active" id="tabPlay" onclick="switchMode('play')">⚔️ 대국</button>
-          <button class="mode-btn" id="tabEdit" onclick="switchMode('edit')">🧩 판편집</button>
-        </div>
+        <button class="menu-btn mode-toggle-btn play" id="modeToggleBtn" onclick="toggleMode()" title="대국 모드 (클릭 시 판편집으로 전환)">⚔️ 대국</button>
         <button class="menu-btn" onclick="openBlunderModal()" style="border-color:rgba(245,158,11,0.5); color:#ffd166;" title="내가 갑자기 불리해진 패착 지점 찾기 & AI 최선수 정답 보기">🎯 복기</button>
         <button class="menu-btn" onclick="toggleKifuModal(true)" title="기보 저장 및 불러오기">📁 기보</button>
       </div>
@@ -1179,13 +1168,12 @@
       </div>
 
       <div class="match-sub-row">
-        <div class="side-toggle">
-          <button class="mini-chip cho active" id="sideChoBtn" onclick="selectMySide('b')">🔵 내가 초(선공)</button>
-          <button class="mini-chip han" id="sideHanBtn" onclick="selectMySide('w')">🔴 내가 한(후공)</button>
-        </div>
+        <button class="mini-chip cho active" id="sideToggleBtn" onclick="toggleMySide()" title="클릭하여 내 진영(초/한)을 전환합니다">
+          🔵 내가 초 🔄
+        </button>
 
-        <button class="mini-chip" id="formationBtn" onclick="openFormationModal()" style="color:#ffd166; border-color:rgba(245,158,11,0.45);">
-          ♟️ 상차림: <span id="formationSummary">마상상마 / 마상상마</span>
+        <button class="mini-chip" id="formationBtn" onclick="openFormationModal()" style="color:#ffd166; border-color:rgba(245,158,11,0.45); flex:1; justify-content:center;" title="상차림 설정 열기">
+          ♟️ <span id="formationSummary">나:마상상마 / 상대:마상상마</span> ▾
         </button>
       </div>
     </section>
@@ -1276,19 +1264,19 @@
     <div class="bottom-controls">
       <!-- 수순 이동 및 한수쉼 / 무르기 -->
       <div class="nav-bar">
-        <button class="nav-btn" id="btnBack" onclick="stepBackward()">⏮ 뒤로</button>
+        <button class="nav-btn" id="btnFirst" onclick="stepToStart()" title="대국 첫 상태로 이동">⏮ 처음</button>
+        <button class="nav-btn" id="btnBack" onclick="stepBackward()" title="1수 뒤로 이동">◀ 뒤로</button>
         <div class="move-counter" id="moveCounterText">0 / 0수</div>
-        <button class="nav-btn" id="btnForward" onclick="stepForward()">앞으로 ⏭</button>
+        <button class="nav-btn" id="btnForward" onclick="stepForward()" title="1수 앞으로 이동">앞으로 ▶</button>
         <button class="nav-btn" id="btnPass" onclick="handlePlayerPassTurn()" style="color:#fbbf24; border-color:rgba(245,158,11,0.45);" title="내 차례에 기물을 움직이지 않고 한 수 쉽니다">✋ 한수쉼</button>
         <button class="nav-btn" id="btnUndo" onclick="undoMove()" style="color:#60a5fa; border-color:#2563eb66;">↩ 무르기</button>
       </div>
 
-      <!-- 대국 시작 / 정지 / 기권 / 초기화 -->
+      <!-- 대국 시작 / 기권 / 새게임 -->
       <div class="action-bar">
         <button class="main-btn btn-start" id="btnStart" onclick="handleStartButton()">▶ 게임시작</button>
-        <button class="main-btn btn-stop" id="btnStop" onclick="pauseGame()">⏸ 정지</button>
         <button class="main-btn btn-resign" id="btnResign" onclick="resignGame()">🏳️ 기권</button>
-        <button class="main-btn btn-reset" id="btnReset" onclick="resetGameBoard()">🔄 초기화</button>
+        <button class="main-btn btn-reset" id="btnReset" onclick="resetGameBoard()">🔄 새게임</button>
       </div>
     </div>
 
@@ -1955,7 +1943,7 @@
       gameState = 'idle';
       initialFen = getBoardFen();
 
-      document.getElementById('formationSummary').innerText = `${selectedChoFormation} / ${selectedHanFormation}`;
+      updateFormationSummaryUI();
       resetEvalUI();
       updateAllUI();
       saveAutoState();
@@ -2013,6 +2001,8 @@
 
       // 수순 카운터 및 네비게이션 버튼 활성화 상태
       document.getElementById('moveCounterText').innerText = `${currentPly} / ${moveHistory.length}수`;
+      const btnFirst = document.getElementById('btnFirst');
+      if (btnFirst) btnFirst.disabled = currentPly <= 0;
       document.getElementById('btnBack').disabled = currentPly <= 0;
       document.getElementById('btnForward').disabled = currentPly >= moveHistory.length;
       document.getElementById('btnUndo').disabled = currentPly <= 0 || isAiThinking;
@@ -2124,11 +2114,34 @@
       }
     }
 
+    function updateSideToggleUI() {
+      const btn = document.getElementById('sideToggleBtn');
+      if (!btn) return;
+      if (mySide === 'b') {
+        btn.className = 'mini-chip cho active';
+        btn.innerHTML = '🔵 내가 초 🔄';
+      } else {
+        btn.className = 'mini-chip han active';
+        btn.innerHTML = '🔴 내가 한 🔄';
+      }
+    }
+
+    function updateFormationSummaryUI() {
+      const el = document.getElementById('formationSummary');
+      if (el) {
+        const myForm = mySide === 'b' ? selectedChoFormation : selectedHanFormation;
+        const oppForm = mySide === 'b' ? selectedHanFormation : selectedChoFormation;
+        el.innerText = `나:${myForm} / 상대:${oppForm}`;
+      }
+    }
+
     function updateAllUI() {
       renderBoard();
       updateScoreAndStatusUI();
       updateLevelUI();
       updateEditPaletteCountsUI();
+      updateSideToggleUI();
+      updateFormationSummaryUI();
     }
 
     // =========================================================================
@@ -2470,7 +2483,16 @@
       }
     }
 
-    // ⏮ 뒤로
+    // ⏮ 처음으로 (0수로 이동)
+    function stepToStart() {
+      if (currentPly <= 0) return;
+      stopAiThinking();
+      if (gameState === 'playing') gameState = 'paused';
+      reconstructBoardAtPly(0);
+      updateAllUI();
+    }
+
+    // ◀ 뒤로 (1수 뒤로)
     function stepBackward() {
       if (currentPly <= 0) return;
       stopAiThinking();
@@ -2579,19 +2601,20 @@
       showToast(`🏳️ 기권하셨습니다. ${winner} 승리!`);
     }
 
-    // 내가 초(선공) / 내가 한(후공) 선택 (대국 중에도 현재 국면 그대로 진영 교대 가능!)
+    // 내 진영(초/한) 토글 전환
+    function toggleMySide() {
+      selectMySide(mySide === 'b' ? 'w' : 'b');
+    }
+
     function selectMySide(side) {
       mySide = side === 'w' ? 'w' : 'b';
       isFlipped = (mySide === 'b'); // 내 진영이 항상 화면 아래쪽에 오도록 회전
-
-      document.getElementById('sideChoBtn').classList.toggle('active', mySide === 'b');
-      document.getElementById('sideHanBtn').classList.toggle('active', mySide === 'w');
 
       stopAiThinking();
       updateAllUI();
       saveAutoState();
 
-      const label = mySide === 'b' ? '🔵 내가 초(선공)' : '🔴 내가 한(후공)';
+      const label = mySide === 'b' ? '🔵 내가 초' : '🔴 내가 한';
       showToast(`${label} 입장으로 전환되었습니다.`);
 
       // 대국 진행 중이고 이제 AI 차례가 되었다면 즉시 AI 착수
@@ -2601,7 +2624,11 @@
     }
 
     function swapRoleAndFlip() {
-      selectMySide(mySide === 'b' ? 'w' : 'b');
+      toggleMySide();
+    }
+
+    function toggleMode() {
+      switchMode(appMode === 'play' ? 'edit' : 'play');
     }
 
     function switchMode(mode) {
@@ -2609,8 +2636,18 @@
       const prevMode = appMode;
       appMode = mode;
 
-      document.getElementById('tabPlay').classList.toggle('active', mode === 'play');
-      document.getElementById('tabEdit').classList.toggle('active', mode === 'edit');
+      const modeBtn = document.getElementById('modeToggleBtn');
+      if (modeBtn) {
+        if (mode === 'play') {
+          modeBtn.className = 'menu-btn mode-toggle-btn play';
+          modeBtn.innerHTML = '⚔️ 대국';
+          modeBtn.title = '대국 모드 (클릭 시 판편집으로 전환)';
+        } else {
+          modeBtn.className = 'menu-btn mode-toggle-btn edit';
+          modeBtn.innerHTML = '🧩 판편집';
+          modeBtn.title = '판편집 모드 (클릭 시 대국으로 전환)';
+        }
+      }
       document.getElementById('playPanel').classList.toggle('hidden', mode !== 'play');
       document.getElementById('editPanel').classList.toggle('active', mode === 'edit');
 
@@ -2876,7 +2913,7 @@
       const pvIdx = line.indexOf(' pv ');
       if (pvIdx !== -1) {
         const tokens = line.slice(pvIdx + 4).trim().split(/\s+/);
-        const validMoves = tokens.filter(t => /^[a-i](?:10|[1-9])[a-i](?:10|[1-9])$/i.test(t));
+        const validMoves = tokens.filter(t => /^(?:[a-i](?:10|[1-9])[a-i](?:10|[1-9])|0000)$/i.test(t));
         if (validMoves.length > 0) {
           latestPvMoves = validMoves;
         }
@@ -3273,30 +3310,66 @@
         }
 
         const uci = pvSeq[idx].trim().toLowerCase();
-        const match = uci.match(/^([a-i](?:10|[1-9]))([a-i](?:10|[1-9]))$/);
-        if (!match) {
-          idx++;
-          pvReplayTimer = setTimeout(stepNextPvMove, 200);
-          return;
+        let from = null;
+        let to = null;
+        let movingPiece = null;
+        let isPass = false;
+
+        if (uci === '0000') {
+          isPass = true;
+          const targetKing = currentTurn === 'b' ? 'k' : 'K';
+          for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+              if (board[r][c] === targetKing) {
+                from = { col: c, row: r };
+                to = { col: c, row: r };
+                movingPiece = targetKing;
+              }
+            }
+          }
+          if (!from) {
+            from = { col: 4, row: currentTurn === 'b' ? 1 : 8 };
+            to = { ...from };
+            movingPiece = targetKing;
+          }
+        } else {
+          const match = uci.match(/^([a-i](?:10|[1-9]))([a-i](?:10|[1-9]))$/);
+          if (!match) {
+            idx++;
+            pvReplayTimer = setTimeout(stepNextPvMove, 200);
+            return;
+          }
+
+          from = fromUciSquare(match[1]);
+          to = fromUciSquare(match[2]);
+          movingPiece = board[from.row]?.[from.col];
+          if (from.col === to.col && from.row === to.row) {
+            isPass = true;
+          }
         }
 
-        const from = fromUciSquare(match[1]);
-        const to = fromUciSquare(match[2]);
-        const movingPiece = board[from.row]?.[from.col];
         if (!movingPiece) {
           idx++;
           pvReplayTimer = setTimeout(stepNextPvMove, 200);
           return;
         }
 
-        const capturedPiece = board[to.row]?.[to.col] || null;
-        board[to.row][to.col] = movingPiece;
-        board[from.row][from.col] = null;
+        let capturedPiece = null;
+        if (isPass) {
+          // 한수쉼: 출발지와 도착지가 같으므로 기물을 null로 지우지 않고 원래 상태 보존
+          board[to.row][to.col] = movingPiece;
+        } else {
+          capturedPiece = board[to.row]?.[to.col] || null;
+          board[to.row][to.col] = movingPiece;
+          board[from.row][from.col] = null;
+        }
         playWoodSnap();
 
         const teamLabel = currentTurn === 'b' ? '초' : '한';
         const pieceName = PIECE_NAMES[movingPiece] || movingPiece;
-        const korean = `${teamLabel}${pieceName} ${toUciSquare(to.col, to.row)}`;
+        const korean = isPass
+          ? `${teamLabel} 한수쉼`
+          : `${teamLabel}${pieceName} ${toUciSquare(to.col, to.row)}`;
 
         moveHistory.push({
           uci,
@@ -3395,10 +3468,6 @@
         if (data.choFormation) selectedChoFormation = data.choFormation;
         if (data.hanFormation) selectedHanFormation = data.hanFormation;
 
-        document.getElementById('sideChoBtn').classList.toggle('active', mySide === 'b');
-        document.getElementById('sideHanBtn').classList.toggle('active', mySide === 'w');
-        document.getElementById('formationSummary').innerText = `${selectedChoFormation} / ${selectedHanFormation}`;
-
         reconstructBoardAtPly(currentPly);
         gameState = currentPly > 0 ? 'paused' : 'idle';
         updateAllUI();
@@ -3475,9 +3544,6 @@
 
       if (item.choFormation) selectedChoFormation = item.choFormation;
       if (item.hanFormation) selectedHanFormation = item.hanFormation;
-      document.getElementById('sideChoBtn').classList.toggle('active', mySide === 'b');
-      document.getElementById('sideHanBtn').classList.toggle('active', mySide === 'w');
-      document.getElementById('formationSummary').innerText = `${selectedChoFormation} / ${selectedHanFormation}`;
 
       if (appMode !== 'play') switchMode('play');
       reconstructBoardAtPly(currentPly);
