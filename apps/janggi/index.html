@@ -1100,6 +1100,147 @@
       color: #ffd166;
     }
 
+    /* 시스템 레벨업 모달 (Solo Leveling 푸른색 홀로그램 스타일) */
+    .system-modal-sheet {
+      background: linear-gradient(150deg, rgba(13, 20, 36, 0.98), rgba(9, 13, 22, 0.98));
+      border: 1.5px solid #38bdf8;
+      box-shadow: 0 0 32px rgba(56, 189, 248, 0.35), 0 20px 50px rgba(0, 0, 0, 0.85);
+      border-radius: 16px;
+      padding: 18px 16px;
+      gap: 13px;
+      animation: system-modal-pop 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+
+    @keyframes system-modal-pop {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .system-modal-header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+      padding-bottom: 9px;
+    }
+
+    .system-tag {
+      font-size: 0.62rem;
+      font-weight: 900;
+      letter-spacing: 2.5px;
+      color: #38bdf8;
+      text-transform: uppercase;
+    }
+
+    .system-title {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: #ffd166;
+      letter-spacing: -0.3px;
+      text-shadow: 0 0 12px rgba(255, 209, 102, 0.4);
+    }
+
+    .system-body {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .system-win-badge {
+      text-align: center;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.16);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+
+    .system-rank-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 10px;
+      padding: 11px 8px;
+    }
+
+    .system-rank-from {
+      color: #94a3b8;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-decoration: line-through;
+    }
+
+    .system-rank-arrow {
+      color: #38bdf8;
+      font-size: 1.15rem;
+      font-weight: 900;
+      animation: pulse-arrow 1s infinite alternate;
+    }
+
+    @keyframes pulse-arrow {
+      0% { transform: translateX(-2px); }
+      100% { transform: translateX(3px); }
+    }
+
+    .system-rank-to {
+      color: #ffd166;
+      font-size: 0.94rem;
+      font-weight: 900;
+      text-shadow: 0 0 8px rgba(255, 209, 102, 0.35);
+    }
+
+    .system-desc {
+      color: #cbd5e1;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      text-align: center;
+      background: rgba(56, 189, 248, 0.07);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .system-actions {
+      display: flex;
+      gap: 7px;
+    }
+
+    .system-btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .system-btn:active {
+      transform: scale(0.97);
+    }
+
+    .system-btn.primary {
+      flex: 1.4;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+    }
+
+    .system-btn.secondary {
+      flex: 0.8;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+    }
+
     /* 토스트 알림 */
     .toast {
       position: fixed;
@@ -1375,6 +1516,32 @@
     </div>
   </div>
 
+  <!-- 10. 시스템 레벨업 & 관문 돌파 팝업 모달 (Solo Leveling 시스템창 스타일) -->
+  <div class="modal-backdrop" id="levelUpModal" onclick="if(event.target===this) closeLevelUpModal()">
+    <div class="modal-sheet system-modal-sheet">
+      <div class="system-modal-header">
+        <span class="system-tag">SYSTEM NOTIFICATION</span>
+        <h3 class="system-title" id="lvlModalTitle">✨ [알림: 플레이어 레벨 상승]</h3>
+      </div>
+      <div class="system-body">
+        <div class="system-win-badge" id="lvlModalWinBadge">🏆 외통수 승리!</div>
+        <div class="system-rank-box">
+          <div class="system-rank-from" id="lvlModalFromRank">Lv.1 · 12급 (E급 헌터)</div>
+          <div class="system-rank-arrow">➔</div>
+          <div class="system-rank-to" id="lvlModalToRank">Lv.2 · 1급 (D~C급 헌터)</div>
+        </div>
+        <div class="system-desc" id="lvlModalDesc">
+          축하합니다! 시련을 통과하여 다음 관문이 개방되었습니다.<br/>
+          스톡피쉬 Depth 2 보스전(Skill 20)에 즉시 도전할 수 있습니다!
+        </div>
+      </div>
+      <div class="system-actions">
+        <button class="system-btn primary" id="btnLvlModalNext" onclick="startNextChallengeFromModal()">⚔️ 다음 관문 도전</button>
+        <button class="system-btn secondary" onclick="closeLevelUpModal()">확인</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toastMsg">알림</div>
 
   <script>
@@ -1547,6 +1714,29 @@
         audio.currentTime = 0;
         audio.play().catch(() => {});
       }
+    }
+
+    function playSystemLevelUpChime() {
+      unlockAudio();
+      if (!audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 시스템 레벨업 아르페지오 팡파르
+        notes.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.08);
+          gain.gain.setValueAtTime(0, now + i * 0.08);
+          gain.gain.linearRampToValueAtTime(0.25, now + i * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.38);
+        });
+      } catch (e) {}
     }
 
     // =========================================================================
@@ -2889,7 +3079,8 @@
     }
 
     function handlePlayerWinLevelUp(winnerLabel) {
-      const prevDepth = ladderState.depth;
+      const prevInfo = { ...getLadderRankInfo(ladderState.depth, ladderState.skill), depth: ladderState.depth, skill: ladderState.skill };
+      const isBossWin = ladderState.skill === 20;
 
       if (ladderState.skill === 20) {
         // [1] 보스전(Skill 20) 승리! -> 즉시 다음 Depth의 최고봉(Skill 20)으로 직행!
@@ -2904,7 +3095,7 @@
           maxUnlockedLevel = ladderState.maxDepth;
           const newInfo = getLadderRankInfo(ladderState.depth, ladderState.skill);
           document.getElementById('statusText').innerText = `⚡ 관문 돌파! Depth ${ladderState.depth} 보스전 직행!`;
-          showToast(`🎊 Depth ${prevDepth} 정복! 즉시 Depth ${ladderState.depth} (${newInfo.rank}) 보스전으로 직행합니다!`);
+          showToast(`🎊 Depth ${prevInfo.depth} 정복! 즉시 Depth ${ladderState.depth} (${newInfo.rank}) 보스전으로 직행합니다!`);
         } else {
           document.getElementById('statusText').innerText = `👑 최강의 그림자 군주(장기신) 정복!`;
           showToast(`🏆 축하합니다! 세계 최강의 장기신을 꺾고 최고 칭호를 달성했습니다!`);
@@ -2926,8 +3117,61 @@
         }
       }
 
+      const newInfo = { ...getLadderRankInfo(ladderState.depth, ladderState.skill), depth: ladderState.depth, skill: ladderState.skill };
       updateLevelUI();
       saveAutoState();
+
+      // 외통수 판정 및 음성 후 시스템 레벨업 팝업창 오픈!
+      setTimeout(() => {
+        openLevelUpModal(prevInfo, newInfo, isBossWin);
+      }, 500);
+    }
+
+    function openLevelUpModal(prevInfo, newInfo, isBossWin) {
+      playSystemLevelUpChime();
+      const modal = document.getElementById('levelUpModal');
+      const titleEl = document.getElementById('lvlModalTitle');
+      const badgeEl = document.getElementById('lvlModalWinBadge');
+      const fromEl = document.getElementById('lvlModalFromRank');
+      const toEl = document.getElementById('lvlModalToRank');
+      const descEl = document.getElementById('lvlModalDesc');
+      const nextBtn = document.getElementById('btnLvlModalNext');
+
+      if (badgeEl) {
+        badgeEl.innerText = '🏆 외통수 승리! 관문 격파';
+      }
+
+      if (isBossWin) {
+        if (titleEl) titleEl.innerText = '⚡ [시스템 알림: 관문 돌파 & 쾌속 승급]';
+        if (fromEl) fromEl.innerText = `Lv.${prevInfo.depth} · ${prevInfo.rank} (${prevInfo.tier})`;
+        if (toEl) toEl.innerText = `Lv.${newInfo.depth} · ${newInfo.rank} (${newInfo.tier})`;
+        if (descEl) {
+          descEl.innerHTML = `축하합니다! 시련을 통과하여 <strong>Depth ${newInfo.depth} 보스전</strong>이 개방되었습니다.<br/>`
+            + `<span style="color:#38bdf8;">스톡피쉬 Depth ${newInfo.depth} (Skill 20)</span> 관문에 즉시 도전할 수 있습니다!`;
+        }
+        if (nextBtn) nextBtn.innerText = `⚔️ Depth ${newInfo.depth} 보스전 도전`;
+      } else {
+        if (titleEl) titleEl.innerText = '💪 [시스템 알림: 수련 성공 & 기력 상승]';
+        if (fromEl) fromEl.innerText = `Depth ${prevInfo.depth} (Skill ${prevInfo.skill}/20)`;
+        if (toEl) toEl.innerText = `Depth ${newInfo.depth} (Skill ${newInfo.skill}/20)`;
+        if (descEl) {
+          descEl.innerHTML = `승리를 거두어 기력이 상승했습니다!<br/>`
+            + `<span style="color:#ffd166;">다음 관문: Depth ${newInfo.depth} (Skill ${newInfo.skill}/20)</span>으로 레벨업했습니다.`;
+        }
+        if (nextBtn) nextBtn.innerText = `⚔️ 다음 수련(Skill ${newInfo.skill}) 도전`;
+      }
+
+      if (modal) modal.classList.add('open');
+    }
+
+    function closeLevelUpModal() {
+      const modal = document.getElementById('levelUpModal');
+      if (modal) modal.classList.remove('open');
+    }
+
+    function startNextChallengeFromModal() {
+      closeLevelUpModal();
+      resetGameBoard();
     }
 
     function handlePlayerLossLadder(reason = 'defeat') {
