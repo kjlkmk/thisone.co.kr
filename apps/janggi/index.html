@@ -3275,8 +3275,8 @@
       if (pvSeq.length === 0 && bestmove && bestmove !== '(none)' && bestmove !== 'none') {
         pvSeq = [bestmove.trim().toLowerCase()];
       }
-      // 최대 6수까지 최선 수순 자동 재현
-      pvSeq = pvSeq.slice(0, 6);
+      // 최대 14수까지 최선 수순 자동 재현 (기존 6수에서 대폭 확대)
+      pvSeq = pvSeq.slice(0, 14);
       lastPvSequence = pvSeq;
 
       if (pvSeq.length === 0) {
@@ -3401,7 +3401,7 @@
         }
         updateAllUI();
 
-        pvReplayTimer = setTimeout(stepNextPvMove, 950);
+        pvReplayTimer = setTimeout(stepNextPvMove, 800);
       }
 
       pvReplayTimer = setTimeout(stepNextPvMove, 450);
