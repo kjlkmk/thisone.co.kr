@@ -3130,7 +3130,7 @@
         if (ladderState.skill === 20) {
           subEl.innerText = `🔥 Depth ${ladderState.depth} 관문 보스 (Skill 20) · 이기면 즉시 Depth ${ladderState.depth + 1} 직행!`;
         } else {
-          subEl.innerText = `수련 진행 중: Depth ${ladderState.depth} (Skill ${ladderState.skill}/20) · 이기면 Skill ${ladderState.skill + 1} 승급!`;
+          subEl.innerText = `수련 진행 중: Depth ${ladderState.depth} (Skill ${ladderState.skill}/20) · 이기면 Skill ${Math.min(20, ladderState.skill + 3)} 승급!`;
         }
       }
       if (prevBtn) {
@@ -3146,7 +3146,7 @@
     function changeLevel(delta) {
       if (delta > 0) {
         if (ladderState.skill < 20) {
-          ladderState.skill = Math.min(20, ladderState.skill + 1);
+          ladderState.skill = Math.min(20, ladderState.skill + 3);
         } else if (ladderState.depth < ladderState.maxDepth) {
           ladderState.depth++;
           ladderState.skill = 20;
@@ -3157,7 +3157,7 @@
       } else {
         const minSkill = ladderState.depth === 1 ? 0 : 5;
         if (ladderState.skill > minSkill) {
-          ladderState.skill = Math.max(minSkill, ladderState.skill - 1);
+          ladderState.skill = Math.max(minSkill, ladderState.skill - 3);
         } else if (ladderState.depth > 1) {
           ladderState.depth--;
           ladderState.skill = 20;
@@ -3195,8 +3195,8 @@
           showToast(`🏆 축하합니다! 세계 최강의 장기신을 꺾고 최고 칭호를 달성했습니다!`);
         }
       } else {
-        // [2] 수련 단계 승리! -> 계단식으로 한 단계씩 레벨업 (Skill 5 -> 6 -> 7 -> 8 -> 9 -> 10 ...)
-        ladderState.skill = Math.min(20, ladderState.skill + 1);
+        // [2] 수련 단계 승리! -> 계단식으로 3씩 레벨업 (Skill 5 -> 8 -> 11 -> 14 -> 17 -> 20)
+        ladderState.skill = Math.min(20, ladderState.skill + 3);
         if (ladderState.depth === ladderState.maxDepth && ladderState.skill > ladderState.maxSkill) {
           ladderState.maxSkill = ladderState.skill;
         }
