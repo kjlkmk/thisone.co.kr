@@ -2204,7 +2204,11 @@
       }
 
       // 수순 카운터 및 네비게이션 버튼 활성화 상태
-      document.getElementById('moveCounterText').innerText = `${currentPly} / ${moveHistory.length}수`;
+      if (gameState === 'playing' && currentPly === moveHistory.length) {
+        document.getElementById('moveCounterText').innerText = `${currentPly} / 200수`;
+      } else {
+        document.getElementById('moveCounterText').innerText = `${currentPly} / ${moveHistory.length}수`;
+      }
       const btnFirst = document.getElementById('btnFirst');
       if (btnFirst) btnFirst.disabled = currentPly <= 0;
       document.getElementById('btnBack').disabled = currentPly <= 0;
@@ -2565,6 +2569,11 @@
         return true;
       }
 
+      // [200수 규정 / 연속 한수쉼 / 외통 불가 점수판정 검사]
+      if (checkGameEndByMoveLimitOrMaterial()) {
+        return true;
+      }
+
       if (callout === 'janggun') {
         showToast('⚡ 장군!');
       } else if (callout === 'munggun') {
@@ -2651,9 +2660,94 @@
       saveAutoState();
       showToast('한수 쉼');
 
+      // [200수 규정 / 연속 한수쉼 / 외통 불가 점수판정 검사]
+      if (checkGameEndByMoveLimitOrMaterial()) {
+        return;
+      }
+
       if (appMode === 'play' && gameState === 'playing' && currentTurn !== mySide) {
         scheduleAiMove(450);
       }
+    }
+
+    // =========================================================================
+    // 5.5 200수 규정 도달, 연속 한수쉼 및 외통 불가 점수판정 (카카오장기 공식 규정)
+    // =========================================================================
+    function checkGameEndByMoveLimitOrMaterial() {
+      if (gameState !== 'playing') return false;
+
+      const totalMoves = moveHistory.length;
+      const choKingCheck = findKingCheckInfo(board, 'cho');
+      const hanKingCheck = findKingCheckInfo(board, 'han');
+      const isAnyInCheck = choKingCheck.inCheck || hanKingCheck.inCheck;
+
+      // 1) 200수 규정 도달 판정 (카카오장기 공식 규정)
+      // - 초(선공)가 먼저 두었으므로 한(후공)의 100번째 수(총 200수)까지 완료 보장 (currentTurn === 'b' = 한나라 턴 종료 직후)
+      // - 200수 시점에 장군이 걸려있으면 멍군 응수가 완료되어 장군이 풀릴 때까지 대국 연장
+      if (totalMoves >= 200 && currentTurn === 'b' && !isAnyInCheck) {
+        endGameByScore('200수 규정 도달');
+        return true;
+      }
+
+      // 2) 양자 연속 한수쉼 판정 (한국장기 공식 규정: 서로 1회씩 연속 쉼 시 점수 판정)
+      if (totalMoves >= 2) {
+        const last1 = moveHistory[totalMoves - 1];
+        const last2 = moveHistory[totalMoves - 2];
+        const isPass1 = last1 && (last1.from.col === last1.to.col && last1.from.row === last1.to.row);
+        const isPass2 = last2 && (last2.from.col === last2.to.col && last2.from.row === last2.to.row);
+        if (isPass1 && isPass2 && !isAnyInCheck) {
+          endGameByScore('연속 한수쉼 합의');
+          return true;
+        }
+      }
+
+      // 3) 외통 불가 국면 (양측 공격 기물 전멸 시 즉시 점수 판정)
+      if (isMatingMaterialExhausted() && !isAnyInCheck) {
+        endGameByScore('기물 부족(외통 불가)');
+        return true;
+      }
+
+      return false;
+    }
+
+    function isMatingMaterialExhausted() {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const p = board[r][c];
+          if (!p) continue;
+          const lower = p.toLowerCase();
+          // 차(r), 포(c), 마(n), 졸/병(p) 중 하나라도 남아있으면 아직 공격 가능
+          if (lower === 'r' || lower === 'c' || lower === 'n' || lower === 'p') {
+            return false;
+          }
+        }
+      }
+      return true; // 궁(k), 사(a), 상(b)만 남은 상태 -> 외통 절대 불가
+    }
+
+    function endGameByScore(reason = '200수 규정 도달') {
+      stopAiThinking();
+      gameState = 'ended';
+
+      const { cho, han } = calculateMaterialScores();
+      const isChoWin = cho > han;
+      const winnerTeam = isChoWin ? 'cho' : 'han';
+      const winnerLabel = isChoWin ? '🔵 초(楚)' : '🔴 한(漢)';
+      const myTeamName = mySide === 'b' ? 'cho' : 'han';
+      const isPlayerWin = winnerTeam === myTeamName;
+
+      const scoreDetail = `(초 ${cho.toFixed(1)}점 vs 한 ${han.toFixed(1)}점 · 덤 1.5점 포함)`;
+      document.getElementById('statusText').innerText = `🏆 ${reason} · ${winnerLabel} 점수승! ${scoreDetail}`;
+
+      if (isPlayerWin) {
+        handlePlayerWinLevelUp(`${winnerLabel} 점수승`, 'score', reason);
+      } else {
+        handlePlayerLossLadder('point_defeat');
+        showToast(`🏆 대국 종료: ${winnerLabel} 점수승! ${scoreDetail}`);
+      }
+
+      updateAllUI();
+      saveAutoState();
     }
 
     // initialFen부터 targetPly까지 수순을 재생하여 보드 상태를 정확히 복원
@@ -3078,7 +3172,7 @@
       showToast(`⚔️ 난이도 변경: Depth ${ladderState.depth} · Skill ${ladderState.skill} (${info.rank})`);
     }
 
-    function handlePlayerWinLevelUp(winnerLabel) {
+    function handlePlayerWinLevelUp(winnerLabel, winType = 'oetong', reason = '외통수') {
       const prevInfo = { ...getLadderRankInfo(ladderState.depth, ladderState.skill), depth: ladderState.depth, skill: ladderState.skill };
       const isBossWin = ladderState.skill === 20;
 
@@ -3121,13 +3215,13 @@
       updateLevelUI();
       saveAutoState();
 
-      // 외통수 판정 및 음성 후 시스템 레벨업 팝업창 오픈!
+      // 승리 팝업 오픈!
       setTimeout(() => {
-        openLevelUpModal(prevInfo, newInfo, isBossWin);
+        openLevelUpModal(prevInfo, newInfo, isBossWin, winType, reason);
       }, 500);
     }
 
-    function openLevelUpModal(prevInfo, newInfo, isBossWin) {
+    function openLevelUpModal(prevInfo, newInfo, isBossWin, winType = 'oetong', reason = '외통수') {
       playSystemLevelUpChime();
       const modal = document.getElementById('levelUpModal');
       const titleEl = document.getElementById('lvlModalTitle');
@@ -3137,8 +3231,9 @@
       const descEl = document.getElementById('lvlModalDesc');
       const nextBtn = document.getElementById('btnLvlModalNext');
 
+      const isScoreWin = winType === 'score';
       if (badgeEl) {
-        badgeEl.innerText = '🏆 외통수 승리! 관문 격파';
+        badgeEl.innerText = isScoreWin ? `🏆 ${reason} · 점수승!` : '🏆 외통수 승리! 관문 격파';
       }
 
       if (isBossWin) {
@@ -3146,8 +3241,10 @@
         if (fromEl) fromEl.innerText = `Lv.${prevInfo.depth} · ${prevInfo.rank} (${prevInfo.tier})`;
         if (toEl) toEl.innerText = `Lv.${newInfo.depth} · ${newInfo.rank} (${newInfo.tier})`;
         if (descEl) {
-          descEl.innerHTML = `축하합니다! 시련을 통과하여 <strong>Depth ${newInfo.depth} 보스전</strong>이 개방되었습니다.<br/>`
-            + `<span style="color:#38bdf8;">스톡피쉬 Depth ${newInfo.depth} (Skill 20)</span> 관문에 즉시 도전할 수 있습니다!`;
+          const winMsg = isScoreWin
+            ? `점수 판정에서 우세를 지켜내어 관문을 돌파했습니다!<br/>`
+            : `축하합니다! 시련을 통과하여 <strong>Depth ${newInfo.depth} 보스전</strong>이 개방되었습니다.<br/>`;
+          descEl.innerHTML = winMsg + `<span style="color:#38bdf8;">스톡피쉬 Depth ${newInfo.depth} (Skill 20)</span> 관문에 즉시 도전할 수 있습니다!`;
         }
         if (nextBtn) nextBtn.innerText = `⚔️ Depth ${newInfo.depth} 보스전 도전`;
       } else {
@@ -3155,8 +3252,10 @@
         if (fromEl) fromEl.innerText = `Depth ${prevInfo.depth} (Skill ${prevInfo.skill}/20)`;
         if (toEl) toEl.innerText = `Depth ${newInfo.depth} (Skill ${newInfo.skill}/20)`;
         if (descEl) {
-          descEl.innerHTML = `승리를 거두어 기력이 상승했습니다!<br/>`
-            + `<span style="color:#ffd166;">다음 관문: Depth ${newInfo.depth} (Skill ${newInfo.skill}/20)</span>으로 레벨업했습니다.`;
+          const winMsg = isScoreWin
+            ? `점수 판정 우세로 수련을 성공적으로 완수했습니다!<br/>`
+            : `승리를 거두어 기력이 상승했습니다!<br/>`;
+          descEl.innerHTML = winMsg + `<span style="color:#ffd166;">다음 관문: Depth ${newInfo.depth} (Skill ${newInfo.skill}/20)</span>으로 레벨업했습니다.`;
         }
         if (nextBtn) nextBtn.innerText = `⚔️ 다음 수련(Skill ${newInfo.skill}) 도전`;
       }
