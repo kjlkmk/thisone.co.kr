@@ -201,6 +201,17 @@
       text-align: center;
       gap: 2px;
       min-width: 0;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      border-radius: 8px;
+      padding: 2px 4px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .level-badge-center:active {
+      background: rgba(255, 255, 255, 0.08);
+      transform: scale(0.97);
     }
 
     .level-badge-title {
@@ -1308,7 +1319,7 @@
     <section class="top-panel play-panel" id="playPanel">
       <div class="level-banner">
         <button class="level-step-btn" id="btnPrevLevel" onclick="changeLevel(-1)" title="이전 레벨로 낮추기">◀</button>
-        <div class="level-badge-center">
+        <div class="level-badge-center" onclick="confirmResetLadder()" title="탭하여 기력(레벨) 초기화">
           <div class="level-badge-title" id="levelBadgeTitle">🏆 Lv.1 · 18급 (입문)</div>
           <div class="level-badge-sub" id="levelBadgeSub">최고 달성: Lv.1 (18급) · 승리 시 다음 레벨 해금!</div>
         </div>
@@ -1452,11 +1463,12 @@
       <!-- 저장된 기보 리스트 -->
       <div class="kifu-list" id="kifuList"></div>
 
-      <!-- 보조 도구 (전체 기보 백업 및 복원) -->
+      <!-- 보조 도구 (전체 기보 백업 및 복원 & 기력 초기화) -->
       <div class="modal-footer-tools">
         <button onclick="exportAllKifuJson()">💾 기보 전체 파일 백업</button>
         <button onclick="document.getElementById('kifuFileInput').click()">📂 백업 파일 불러오기</button>
         <input type="file" id="kifuFileInput" accept=".json" style="display:none" onchange="importKifuJsonFile(event)" />
+        <button onclick="toggleKifuModal(false); setTimeout(confirmResetLadder, 120);" style="color:#ef4444; border-color:rgba(239,68,68,0.45);">🔄 기력(레벨) 완전 초기화</button>
       </div>
     </div>
   </div>
@@ -3172,6 +3184,25 @@
       showToast(`⚔️ 난이도 변경: Depth ${ladderState.depth} · Skill ${ladderState.skill} (${info.rank})`);
     }
 
+    function confirmResetLadder() {
+      const cur = getLadderRankInfo(ladderState.depth, ladderState.skill);
+      const isBoss = ladderState.skill === 20;
+      const msg = `⚠️ 기력(레벨)을 완전 초기화하시겠습니까?\n\n· 현재 진행도: Lv.${ladderState.depth} · ${cur.rank} (${cur.tier}) ${isBoss ? '[보스전]' : 'Skill ' + ladderState.skill}\n· 최고 해금: Lv.${ladderState.maxDepth} (Skill ${ladderState.maxSkill})\n\n확인을 누르면 처음 관문인 Lv.1 (Depth 1, Skill 20 · 12급)으로 즉시 리셋됩니다.`;
+      if (!confirm(msg)) return;
+
+      ladderState = {
+        depth: 1,
+        skill: 20,
+        maxDepth: 1,
+        maxSkill: 20
+      };
+      currentLevel = 1;
+      maxUnlockedLevel = 1;
+      updateLevelUI();
+      saveAutoState();
+      showToast('🔄 기력이 Lv.1 (Depth 1, Skill 20 · 12급 E급 헌터)으로 완전 초기화되었습니다!');
+    }
+
     function handlePlayerWinLevelUp(winnerLabel, winType = 'oetong', reason = '외통수') {
       const prevInfo = { ...getLadderRankInfo(ladderState.depth, ladderState.skill), depth: ladderState.depth, skill: ladderState.skill };
       const isBossWin = ladderState.skill === 20;
@@ -4110,6 +4141,18 @@
 
     // 초기 실행
     window.addEventListener('DOMContentLoaded', () => {
+      // URL에 ?reset 파라미터가 있는 경우 기력 자동 초기화
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('reset')) {
+        ladderState = { depth: 1, skill: 20, maxDepth: 1, maxSkill: 20 };
+        currentLevel = 1;
+        maxUnlockedLevel = 1;
+        saveAutoState();
+        try {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) {}
+      }
+
       if (!loadAutoState()) {
         resetToFormationBoard(false);
       }
