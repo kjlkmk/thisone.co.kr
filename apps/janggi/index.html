@@ -1252,6 +1252,44 @@
       color: #cbd5e1;
     }
 
+    /* 수련/패배 조정 모드 (Amber/Warm Warning 스타일) */
+    .system-modal-sheet.training-mode {
+      border-color: #f59e0b;
+      box-shadow: 0 0 32px rgba(245, 158, 11, 0.35), 0 20px 50px rgba(0, 0, 0, 0.85);
+    }
+
+    .system-modal-sheet.training-mode .system-modal-header {
+      border-bottom-color: rgba(245, 158, 11, 0.25);
+    }
+
+    .system-modal-sheet.training-mode .system-tag {
+      color: #f59e0b;
+    }
+
+    .system-modal-sheet.training-mode .system-win-badge {
+      color: #fbbf24;
+      background: rgba(245, 158, 11, 0.16);
+      border-color: rgba(251, 191, 36, 0.4);
+    }
+
+    .system-modal-sheet.training-mode .system-rank-box {
+      border-color: rgba(245, 158, 11, 0.25);
+    }
+
+    .system-modal-sheet.training-mode .system-rank-arrow {
+      color: #f59e0b;
+    }
+
+    .system-modal-sheet.training-mode .system-desc {
+      background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    .system-modal-sheet.training-mode .system-btn.primary {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+    }
+
     /* 토스트 알림 */
     .toast {
       position: fixed;
@@ -1528,18 +1566,18 @@
     </div>
   </div>
 
-  <!-- 10. 시스템 레벨업 & 관문 돌파 팝업 모달 (Solo Leveling 시스템창 스타일) -->
+  <!-- 10. 시스템 레벨업 & 수련 난이도 조정 팝업 모달 (Solo Leveling 시스템창 스타일) -->
   <div class="modal-backdrop" id="levelUpModal" onclick="if(event.target===this) closeLevelUpModal()">
-    <div class="modal-sheet system-modal-sheet">
+    <div class="modal-sheet system-modal-sheet" id="systemModalSheet">
       <div class="system-modal-header">
-        <span class="system-tag">SYSTEM NOTIFICATION</span>
+        <span class="system-tag" id="systemModalTag">SYSTEM NOTIFICATION</span>
         <h3 class="system-title" id="lvlModalTitle">✨ [알림: 플레이어 레벨 상승]</h3>
       </div>
       <div class="system-body">
         <div class="system-win-badge" id="lvlModalWinBadge">🏆 외통수 승리!</div>
-        <div class="system-rank-box">
+        <div class="system-rank-box" id="lvlModalRankBox">
           <div class="system-rank-from" id="lvlModalFromRank">Lv.1 · 12급 (E급 헌터)</div>
-          <div class="system-rank-arrow">➔</div>
+          <div class="system-rank-arrow" id="lvlModalRankArrow">➔</div>
           <div class="system-rank-to" id="lvlModalToRank">Lv.2 · 1급 (D~C급 헌터)</div>
         </div>
         <div class="system-desc" id="lvlModalDesc">
@@ -1547,8 +1585,9 @@
           스톡피쉬 Depth 2 보스전(Skill 20)에 즉시 도전할 수 있습니다!
         </div>
       </div>
-      <div class="system-actions">
+      <div class="system-actions" id="lvlModalActions">
         <button class="system-btn primary" id="btnLvlModalNext" onclick="startNextChallengeFromModal()">⚔️ 다음 관문 도전</button>
+        <button class="system-btn secondary blunder-btn" id="btnLvlModalBlunder" onclick="openBlunderFromModal()" style="display:none; color:#ffd166; border-color:rgba(245,158,11,0.5);">🎯 패착 복기</button>
         <button class="system-btn secondary" onclick="closeLevelUpModal()">확인</button>
       </div>
     </div>
@@ -1747,6 +1786,30 @@
           gain.connect(audioCtx.destination);
           osc.start(now + i * 0.08);
           osc.stop(now + i * 0.08 + 0.38);
+        });
+      } catch (e) {}
+    }
+
+    function playSystemTrainingChime() {
+      unlockAudio();
+      if (!audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        // G4 (392Hz) -> E4 (329.63Hz) -> C4 (261.63Hz) 차분하고 묵직한 시스템 수련 비프음
+        const notes = [392.00, 329.63, 261.63];
+        notes.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.1);
+          gain.gain.setValueAtTime(0, now + i * 0.1);
+          gain.gain.linearRampToValueAtTime(0.22, now + i * 0.1 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.32);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.35);
         });
       } catch (e) {}
     }
@@ -3255,12 +3318,19 @@
     function openLevelUpModal(prevInfo, newInfo, isBossWin, winType = 'oetong', reason = '외통수') {
       playSystemLevelUpChime();
       const modal = document.getElementById('levelUpModal');
+      const sheet = document.getElementById('systemModalSheet');
+      const tagEl = document.getElementById('systemModalTag');
       const titleEl = document.getElementById('lvlModalTitle');
       const badgeEl = document.getElementById('lvlModalWinBadge');
       const fromEl = document.getElementById('lvlModalFromRank');
       const toEl = document.getElementById('lvlModalToRank');
       const descEl = document.getElementById('lvlModalDesc');
       const nextBtn = document.getElementById('btnLvlModalNext');
+      const blunderBtn = document.getElementById('btnLvlModalBlunder');
+
+      if (sheet) sheet.classList.remove('training-mode');
+      if (tagEl) tagEl.innerText = 'SYSTEM NOTIFICATION';
+      if (blunderBtn) blunderBtn.style.display = 'none';
 
       const isScoreWin = winType === 'score';
       if (badgeEl) {
@@ -3277,7 +3347,10 @@
             : `축하합니다! 시련을 통과하여 <strong>Depth ${newInfo.depth} 보스전</strong>이 개방되었습니다.<br/>`;
           descEl.innerHTML = winMsg + `<span style="color:#38bdf8;">스톡피쉬 Depth ${newInfo.depth} (Skill 20)</span> 관문에 즉시 도전할 수 있습니다!`;
         }
-        if (nextBtn) nextBtn.innerText = `⚔️ Depth ${newInfo.depth} 보스전 도전`;
+        if (nextBtn) {
+          nextBtn.innerText = `⚔️ Depth ${newInfo.depth} 보스전 도전`;
+          nextBtn.onclick = startNextChallengeFromModal;
+        }
       } else {
         if (titleEl) titleEl.innerText = '💪 [시스템 알림: 수련 성공 & 기력 상승]';
         if (fromEl) fromEl.innerText = `Depth ${prevInfo.depth} (Skill ${prevInfo.skill}/20)`;
@@ -3288,7 +3361,81 @@
             : `승리를 거두어 기력이 상승했습니다!<br/>`;
           descEl.innerHTML = winMsg + `<span style="color:#ffd166;">다음 관문: Depth ${newInfo.depth} (Skill ${newInfo.skill}/20)</span>으로 레벨업했습니다.`;
         }
-        if (nextBtn) nextBtn.innerText = `⚔️ 다음 수련(Skill ${newInfo.skill}) 도전`;
+        if (nextBtn) {
+          nextBtn.innerText = `⚔️ 다음 수련(Skill ${newInfo.skill}) 도전`;
+          nextBtn.onclick = startNextChallengeFromModal;
+        }
+      }
+
+      if (modal) modal.classList.add('open');
+    }
+
+    function openLossTrainingModal(prevInfo, newInfo, reason = 'defeat') {
+      playSystemTrainingChime();
+      const modal = document.getElementById('levelUpModal');
+      const sheet = document.getElementById('systemModalSheet');
+      const tagEl = document.getElementById('systemModalTag');
+      const titleEl = document.getElementById('lvlModalTitle');
+      const badgeEl = document.getElementById('lvlModalWinBadge');
+      const fromEl = document.getElementById('lvlModalFromRank');
+      const toEl = document.getElementById('lvlModalToRank');
+      const descEl = document.getElementById('lvlModalDesc');
+      const nextBtn = document.getElementById('btnLvlModalNext');
+      const blunderBtn = document.getElementById('btnLvlModalBlunder');
+
+      if (sheet) sheet.classList.add('training-mode');
+      if (tagEl) tagEl.innerText = 'TRAINING NOTIFICATION';
+
+      let reasonTitle = '🛡️ [시스템 알림: 관문 공략 실패]';
+      let badgeText = '🛡️ 외통패 (수읽기 열세)';
+
+      if (reason === 'resign') {
+        reasonTitle = '🏳️ [시스템 알림: 전략적 후퇴 & 수련 모드]';
+        badgeText = '🏳️ 대국 기권 (전략적 후퇴)';
+      } else if (reason === 'point_defeat') {
+        reasonTitle = '⚖️ [시스템 알림: 점수 판정패 & 난이도 보정]';
+        badgeText = '⚖️ 200수 점수 판정패';
+      }
+
+      if (titleEl) titleEl.innerText = reasonTitle;
+      if (badgeEl) badgeEl.innerText = badgeText;
+
+      const isBossPrev = prevInfo.skill === 20;
+      const prevDesc = isBossPrev ? `Depth ${prevInfo.depth} 보스 (Skill 20)` : `Depth ${prevInfo.depth} (Skill ${prevInfo.skill})`;
+      const newDesc = newInfo.skill === 20 ? `Depth ${newInfo.depth} 보스` : `Depth ${newInfo.depth} 수련 (Skill ${newInfo.skill})`;
+
+      if (fromEl) fromEl.innerText = prevDesc;
+      if (toEl) toEl.innerText = newDesc;
+
+      if (descEl) {
+        if (isBossPrev) {
+          descEl.innerHTML = `적의 수읽기가 플레이어를 압도했습니다.<br/>` +
+            `<strong style="color:#ffd166;">한 단계 아래 난이도(Skill ${newInfo.skill})</strong>에서 기본기와 행마를 충분히 연습한 후 다시 보스전에 도전하십시오!<br/>` +
+            `<span style="color:#38bdf8;">※ 수련 모드에서 승리할 때마다 3씩 빠르게 레벨업합니다.</span>`;
+        } else if (prevInfo.skill !== newInfo.skill) {
+          descEl.innerHTML = `기본기 보강을 위해 <strong style="color:#ffd166;">Skill ${newInfo.skill} 수련 모드</strong>로 난이도가 자동 조정되었습니다.<br/>` +
+            `한 단계 아래에서 행마와 수읽기를 다진 후 다시 승급에 도전하세요!`;
+        } else {
+          descEl.innerHTML = `현재 <strong style="color:#ffd166;">Depth ${newInfo.depth} (Skill ${newInfo.skill})</strong> 집중 수련 단계입니다.<br/>` +
+            `무리한 공격보다 수비와 기물 연계를 점검하며 한 수씩 차분히 연습해 보세요!`;
+        }
+      }
+
+      if (nextBtn) {
+        nextBtn.innerText = `💪 수련 대국 시작 (Skill ${newInfo.skill})`;
+        nextBtn.onclick = () => {
+          closeLevelUpModal();
+          resetToFormationBoard(false);
+          showToast(`⚔️ Depth ${newInfo.depth} (Skill ${newInfo.skill}) 수련 대국을 시작합니다!`);
+        };
+      }
+
+      if (blunderBtn) {
+        blunderBtn.style.display = moveHistory.length >= 4 ? 'block' : 'none';
+        blunderBtn.onclick = () => {
+          closeLevelUpModal();
+          openBlunderModal();
+        };
       }
 
       if (modal) modal.classList.add('open');
@@ -3301,10 +3448,22 @@
 
     function startNextChallengeFromModal() {
       closeLevelUpModal();
-      resetGameBoard();
+      resetToFormationBoard(false);
+      showToast('⚔️ 새로운 관문 대국이 세팅되었습니다!');
+    }
+
+    function openBlunderFromModal() {
+      closeLevelUpModal();
+      openBlunderModal();
     }
 
     function handlePlayerLossLadder(reason = 'defeat') {
+      const prevInfo = {
+        ...getLadderRankInfo(ladderState.depth, ladderState.skill),
+        depth: ladderState.depth,
+        skill: ladderState.skill
+      };
+
       if (ladderState.skill === 20) {
         // [1] Skill 20 보스전에서 패배 -> Skill 10으로 하향하여 수련 모드 진입
         ladderState.skill = 10;
@@ -3324,8 +3483,19 @@
       }
 
       currentLevel = ladderState.depth;
+      const newInfo = {
+        ...getLadderRankInfo(ladderState.depth, ladderState.skill),
+        depth: ladderState.depth,
+        skill: ladderState.skill
+      };
+
       updateLevelUI();
       saveAutoState();
+
+      // 패배/기권 팝업 오픈 (등급 아래에서 수련 안내)
+      setTimeout(() => {
+        openLossTrainingModal(prevInfo, newInfo, reason);
+      }, 450);
     }
 
     function initWasmEngine() {
