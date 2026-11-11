@@ -1687,16 +1687,17 @@
 
     <!-- 5. 하단 컨트롤 바 (안 A: 상태줄 + 수순 탐색(연습전용) + 대국 제어) -->
     <div class="bottom-controls">
-      <!-- 턴 상태줄 & FEN 복사 (대국모드에서는 진영교대 숨김, 한수쉼 표시) -->
+      <!-- 턴 상태줄 & FEN 복사 · 링크 공유 (대국모드에서는 진영교대 숨김, 한수쉼 표시) -->
       <div class="status-bar">
         <div class="turn-badge">
           <span class="turn-indicator" id="turnDot"></span>
           <span id="statusText">대국 대기 중 · 초(楚) 차례</span>
         </div>
         <div style="display:flex; gap:4px; flex-shrink:0;">
-          <button class="mini-chip" id="btnPassMatch" onclick="handlePlayerPassTurn()" style="color:#fbbf24; border-color:rgba(245,158,11,0.45);" title="내 차례에 기물을 움직이지 않고 한 수 쉽니다">✋ 한수쉼</button>
-          <button class="mini-chip" onclick="copyCurrentFen()" title="현재 장기판 상태의 FEN 문자열을 클립보드에 복사합니다">📋 FEN 복사</button>
-          <button class="mini-chip" id="btnSwapRole" onclick="swapRoleAndFlip()" style="display:none;" title="연습모드 전용: 현재 국면 그대로 나와 AI의 진영을 바꾸고 판을 뒤집습니다">🔄 진영 교대</button>
+          <button class="mini-chip" id="btnPassMatch" onclick="handlePlayerPassTurn()" style="color:#fbbf24; border-color:rgba(245,158,11,0.45); padding:5px 7px;" title="내 차례에 기물을 움직이지 않고 한 수 쉽니다">✋ 한수쉼</button>
+          <button class="mini-chip" onclick="copyCurrentFen()" style="padding:5px 7px;" title="현재 장기판 상태의 FEN 문자열을 클립보드에 복사합니다">📋 FEN</button>
+          <button class="mini-chip" onclick="shareCurrentBoardLink()" style="color:#38bdf8; border-color:rgba(56,189,248,0.45); padding:5px 7px;" title="현재 장기판 국면(및 수순)을 웹 링크(URL)로 복사·공유합니다">🔗 공유</button>
+          <button class="mini-chip" id="btnSwapRole" onclick="swapRoleAndFlip()" style="display:none; padding:5px 7px;" title="연습모드 전용: 현재 국면 그대로 나와 AI의 진영을 바꾸고 판을 뒤집습니다">🔄 교대</button>
         </div>
       </div>
 
@@ -3619,23 +3620,205 @@
 
     function copyCurrentFen() {
       const fen = getBoardFen();
+      copyTextToClipboard(fen, '📋 현재 국면 FEN이 복사되었습니다!');
+    }
+
+    function copyTextToClipboard(text, msg = '📋 클립보드에 복사되었습니다!') {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(fen).then(() => {
-          showToast('📋 현재 국면 FEN이 복사되었습니다!');
-        }).catch(() => fallbackCopyText(fen));
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(msg);
+        }).catch(() => fallbackCopyText(text, msg));
       } else {
-        fallbackCopyText(fen);
+        fallbackCopyText(text, msg);
       }
     }
 
-    function fallbackCopyText(text) {
+    function fallbackCopyText(text, msg = '📋 클립보드에 복사되었습니다!') {
       const ta = document.createElement('textarea');
       ta.value = text;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand('copy');
       document.body.removeChild(ta);
-      showToast('📋 현재 국면 FEN이 복사되었습니다!');
+      showToast(msg);
+    }
+
+    // 현재 국면 또는 기보 수순을 URL 파라미터로 인코딩한 공유 링크 생성
+    function buildShareUrl({ fen, moves = [], ply = null, side = 'b' }) {
+      const baseUrl = window.location.origin && window.location.origin !== 'null'
+        ? `${window.location.origin}${window.location.pathname}`
+        : 'https://thisone.co.kr/apps/janggi/';
+      const params = new URLSearchParams();
+      params.set('fen', fen);
+      params.set('side', side === 'w' ? 'w' : 'b');
+      if (Array.isArray(moves) && moves.length > 0) {
+        params.set('moves', moves.join('.'));
+        if (typeof ply === 'number') {
+          params.set('ply', String(ply));
+        }
+      }
+      return `${baseUrl}?${params.toString()}`;
+    }
+
+    function shareCurrentBoardLink() {
+      let url;
+      let label;
+      if (!isEditingBoardNow() && moveHistory.length > 0) {
+        const uciList = moveHistory.map(m => m.uci).filter(Boolean);
+        url = buildShareUrl({
+          fen: initialFen || getBoardFen(),
+          moves: uciList,
+          ply: currentPly,
+          side: mySide
+        });
+        label = `나혼자 레벨업 장기 (${currentPly}/${moveHistory.length}수 국면 공유)`;
+      } else {
+        url = buildShareUrl({
+          fen: getBoardFen(),
+          moves: [],
+          side: mySide
+        });
+        label = '나혼자 레벨업 장기 (현재 국면 공유)';
+      }
+
+      copyTextToClipboard(url, '🔗 현재 국면 공유 링크가 복사되었습니다!');
+      if (navigator.share) {
+        navigator.share({
+          title: label,
+          text: `${label} - 링크를 누르면 같은 장기판 국면에서 이어서 두거나 복기할 수 있습니다.`,
+          url
+        }).catch(() => {});
+      }
+    }
+
+    function shareKifuById(id) {
+      const list = getSavedKifuList();
+      const item = list.find(x => x.id === id);
+      if (!item) return;
+
+      const uciList = (item.moveHistory || []).map(m => m.uci).filter(Boolean);
+      const url = buildShareUrl({
+        fen: item.initialFen || getBoardFen(),
+        moves: uciList,
+        ply: uciList.length,
+        side: item.mySide || 'b'
+      });
+
+      copyTextToClipboard(url, `🔗 '${item.title}' 기보 공유 링크가 복사되었습니다!`);
+      if (navigator.share) {
+        navigator.share({
+          title: `나혼자 레벨업 장기 기보 - ${item.title}`,
+          text: `[기보 공유] ${item.title} (${uciList.length}수)`,
+          url
+        }).catch(() => {});
+      }
+    }
+
+    // URL 파라미터(?fen=...&moves=...&ply=...&side=...)로 전달된 공유 국면/기보 로드
+    function loadSharedStateFromUrl(urlParams) {
+      if (!urlParams || !urlParams.has('fen')) return false;
+      const rawFen = urlParams.get('fen');
+      if (!rawFen || !rawFen.trim()) return false;
+
+      try {
+        const parsed = parseFenToBoardState(rawFen.trim());
+        board = parsed.board;
+        currentTurn = parsed.turn;
+        initialFen = getBoardFen();
+
+        const sideParam = urlParams.get('side');
+        mySide = sideParam === 'w' ? 'w' : 'b';
+        isFlipped = (mySide === 'b');
+
+        moveHistory = [];
+        lastMove = null;
+        selectedCell = null;
+
+        const movesParam = urlParams.get('moves');
+        if (movesParam && movesParam.trim()) {
+          const tokens = movesParam.trim().split('.');
+          for (const rawUci of tokens) {
+            const uci = rawUci.trim().toLowerCase();
+            const match = uci.match(/^([a-i](?:10|[1-9]))([a-i](?:10|[1-9]))$/);
+            if (!match && uci !== '0000') continue;
+
+            let from;
+            let to;
+            let movingPiece;
+            let isPass = false;
+
+            if (uci === '0000') {
+              isPass = true;
+              const targetKing = currentTurn === 'b' ? 'k' : 'K';
+              from = { col: 4, row: currentTurn === 'b' ? 1 : 8 };
+              for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                  if (board[r][c] === targetKing) from = { col: c, row: r };
+                }
+              }
+              to = { ...from };
+              movingPiece = targetKing;
+            } else {
+              from = fromUciSquare(match[1]);
+              to = fromUciSquare(match[2]);
+              movingPiece = board[from.row]?.[from.col];
+              if (from.col === to.col && from.row === to.row) isPass = true;
+            }
+            if (!movingPiece) break;
+
+            let capturedPiece = null;
+            if (!isPass) {
+              capturedPiece = board[to.row]?.[to.col] || null;
+              board[to.row][to.col] = movingPiece;
+              board[from.row][from.col] = null;
+            }
+            const teamLabel = currentTurn === 'b' ? '초' : '한';
+            const pieceName = PIECE_NAMES[movingPiece] || movingPiece;
+            const korean = isPass ? `${teamLabel} 한수쉼` : `${teamLabel}${pieceName} ${toUciSquare(to.col, to.row)}`;
+
+            moveHistory.push({
+              uci,
+              from: { ...from },
+              to: { ...to },
+              movingPiece,
+              capturedPiece,
+              team: currentTurn,
+              korean,
+              evalPoints: 0,
+              evalWinProb: 50,
+              mateIn: null
+            });
+            currentTurn = currentTurn === 'b' ? 'w' : 'b';
+          }
+        }
+
+        const plyParam = parseInt(urlParams.get('ply') || '', 10);
+        const targetPly = !isNaN(plyParam)
+          ? Math.max(0, Math.min(moveHistory.length, plyParam))
+          : moveHistory.length;
+
+        appMode = 'practice';
+        isBoardEditing = false;
+        isAiVsAi = false;
+        reconstructBoardAtPly(targetPly);
+        gameState = moveHistory.length > 0 ? 'paused' : 'idle';
+        updateAllUI();
+
+        try {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) {}
+
+        setTimeout(() => {
+          showToast(
+            moveHistory.length > 0
+              ? `🔗 공유받은 기보(${targetPly}/${moveHistory.length}수)를 연습모드로 불러왔습니다!`
+              : '🔗 공유받은 장기판 국면을 연습모드로 불러왔습니다!'
+          );
+        }, 250);
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
 
     function promptFenInput() {
@@ -4957,6 +5140,7 @@
           </div>
           <div class="kifu-actions">
             <button class="kifu-btn load" onclick="loadKifuById('${item.id}')">불러오기</button>
+            <button class="kifu-btn" onclick="shareKifuById('${item.id}')" style="color:#38bdf8; border-color:rgba(56,189,248,0.4);" title="이 기보를 웹 링크(URL)로 복사·공유">🔗</button>
             <button class="kifu-btn del" onclick="deleteKifuById('${item.id}')">🗑️</button>
           </div>
         </div>
@@ -5033,6 +5217,9 @@
 
       if (!loadAutoState()) {
         resetToFormationBoard(false);
+      }
+      if (urlParams.has('fen')) {
+        loadSharedStateFromUrl(urlParams);
       }
       initWasmEngine();
     });
