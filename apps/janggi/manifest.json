@@ -1,0 +1,41 @@
+{
+  "id": "/apps/janggi/",
+  "name": "나혼자 레벨업 장기",
+  "short_name": "레벨업장기",
+  "description": "스마트폰에 최적화된 나혼자 레벨업 장기. 스톡피쉬 AI 실전 대국(E급 헌터~그림자 군주), 연습모드, 판편집, AI 대결, 패착 복기 및 기보 연구를 지원합니다.",
+  "start_url": "/apps/janggi/index.html",
+  "scope": "/apps/janggi/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f131d",
+  "theme_color": "#0f131d",
+  "lang": "ko",
+  "dir": "ltr",
+  "categories": ["games", "board"],
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

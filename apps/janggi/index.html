@@ -5,7 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>나혼자 레벨업 장기 - AI 스톡피쉬 대국 & 기보 연구</title>
   <meta name="description" content="스마트폰에 최적화된 나혼자 레벨업 장기. 브라우저 내장 Fairy-Stockfish AI 대국(헌터 등급 E급~그림자 군주, Depth 1~10 · Skill 0~20 적응형 난이도), 상차림 설정, 판편집, 기보 저장 및 복기를 지원합니다." />
-  <link rel="icon" href="/favicon.ico" />
+  <meta name="theme-color" content="#0f131d" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="레벨업장기" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <!-- 정적 호스팅 및 로컬 서버에서 SharedArrayBuffer(WASM 멀티스레드) 활성화 -->
   <script src="coi-serviceworker.js"></script>
   <script src="engine/stockfish.js"></script>
