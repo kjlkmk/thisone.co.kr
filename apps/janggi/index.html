@@ -110,19 +110,76 @@
       flex-shrink: 0;
     }
 
-    .mode-toggle-btn {
+    .mode-tab-btn {
       transition: all 0.15s ease;
     }
 
-    .mode-toggle-btn.play {
-      background: rgba(37, 99, 235, 0.2);
+    .mode-tab-btn.match.active {
+      background: rgba(37, 99, 235, 0.25);
       border-color: #3b82f6;
       color: #93c5fd;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.25);
     }
 
-    .mode-toggle-btn.edit {
+    .mode-tab-btn.practice.active {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: #10b981;
+      color: #6ee7b7;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.22);
+    }
+
+    .mode-tab-btn.locked {
+      opacity: 0.55;
+      color: #64748b;
+      border-color: #334155;
+    }
+
+    .practice-panel {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .practice-panel.active {
+      display: flex;
+    }
+
+    .practice-toolbar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+
+    .practice-tool-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 0.73rem;
+      font-weight: 800;
+      padding: 7px 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      white-space: nowrap;
+      transition: all 0.12s ease;
+    }
+
+    .practice-tool-btn:active {
+      transform: scale(0.96);
+    }
+
+    .practice-tool-btn.active {
       background: rgba(245, 158, 11, 0.22);
       border-color: #f59e0b;
+      color: #ffd166;
+    }
+
+    .practice-tool-btn.gold {
+      background: rgba(245, 158, 11, 0.16);
+      border-color: rgba(245, 158, 11, 0.45);
       color: #ffd166;
     }
 
@@ -259,8 +316,13 @@
       white-space: nowrap;
     }
 
-    .mini-chip:active {
+    .mini-chip:not(:disabled):active {
       transform: scale(0.96);
+    }
+
+    .mini-chip:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
 
     .mini-chip.cho.active {
@@ -279,7 +341,9 @@
     .edit-panel {
       display: none;
       flex-direction: column;
-      gap: 7px;
+      gap: 6px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .edit-panel.active {
@@ -287,6 +351,19 @@
     }
 
     .play-panel.hidden {
+      display: none;
+    }
+
+    .practice-sub-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      gap: 6px;
+    }
+
+    .practice-sub-row.hidden {
       display: none;
     }
 
@@ -454,9 +531,12 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 2px 2px 0;
-      font-size: 0.76rem;
-      gap: 4px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 9px;
+      font-size: 0.75rem;
+      gap: 6px;
     }
 
     .turn-badge {
@@ -485,10 +565,11 @@
       box-shadow: 0 0 8px var(--han-red);
     }
 
-    /* 4. 반응형 장기판 영역 (스마트폰 화면 폭에 100% 맞춤) */
+    /* 4. 반응형 장기판 영역 (스마트폰 화면 폭에 100% 맞춤 & 세로 중앙 배치) */
     .board-container {
       width: 100%;
       aspect-ratio: 9 / 10;
+      margin: auto 0;
       position: relative;
       background: #bb7e38 url('assets/janggi/JanggiWood.svg') no-repeat center / 100% 100%;
       border: 4px solid #5a3818;
@@ -621,15 +702,14 @@
       100% { transform: scale(1.12); opacity: 1; }
     }
 
-    /* 5. 하단 컨트롤 영역 (수순 탐색 + 대국 제어) */
+    /* 5. 하단 컨트롤 영역 (상태줄 + 수순 탐색 + 대국 제어) */
     .bottom-controls {
       display: flex;
       flex-direction: column;
       gap: 5px;
-      margin-top: auto;
     }
 
-    /* 1열: 처음 / 뒤로 / 수순표시 / 앞으로 / 한수쉼 / 무르기 */
+    /* 1열: 처음 / 뒤로 / 수순표시 / 앞으로 / 한수쉼 / 무르기 (연습모드 전용) */
     .nav-bar {
       display: grid;
       grid-template-columns: 0.85fr 0.85fr 1.15fr 0.95fr 0.95fr 0.95fr;
@@ -639,6 +719,10 @@
       border-radius: 8px;
       padding: 4px;
       align-items: center;
+    }
+
+    .nav-bar.hidden {
+      display: none;
     }
 
     .nav-btn {
@@ -1339,7 +1423,7 @@
   <audio id="audioOetong" src="assets/sounds/voice_oetong.mp3" preload="auto"></audio>
 
   <div class="mobile-shell">
-    <!-- 1. 상단 타이틀 & 모드 전환 & 기보함 버튼 -->
+    <!-- 1. 상단 타이틀 & 모드 전환 (대국모드 / 연습모드) -->
     <header class="app-header">
       <div class="title-wrap">
         <span class="status-dot" id="engineDot" title="스톡피쉬 엔진 상태"></span>
@@ -1347,13 +1431,12 @@
       </div>
 
       <div class="header-right">
-        <button class="menu-btn mode-toggle-btn play" id="modeToggleBtn" onclick="toggleMode()" title="대국 모드 (클릭 시 판편집으로 전환)">⚔️ 대국</button>
-        <button class="menu-btn" onclick="openBlunderModal()" style="border-color:rgba(245,158,11,0.5); color:#ffd166;" title="내가 갑자기 불리해진 패착 지점 찾기 & AI 최선수 정답 보기">🎯 복기</button>
-        <button class="menu-btn" onclick="toggleKifuModal(true)" title="기보 저장 및 불러오기">📁 기보</button>
+        <button class="menu-btn mode-tab-btn match active" id="btnMatchMode" onclick="switchAppMode('match')" title="실전 레벨업 대국 모드 (오직 실력으로 승부)">⚔️ 대국모드</button>
+        <button class="menu-btn mode-tab-btn practice" id="btnPracticeMode" onclick="switchAppMode('practice')" title="자유 연습 · 복기 · 판편집 · 기보 모드 (승패 무관)">🧘 연습모드</button>
       </div>
     </header>
 
-    <!-- 2-A. 대국 모드 상단: 20단계 레벨업 배너 (Depth + Skill 숨김 자동 조합) 및 진영/상차림 -->
+    <!-- 2-A. 대국모드 상단: 레벨 배너 및 진영/상차림 (대국 시작 전만 변경 가능) -->
     <section class="top-panel play-panel" id="playPanel">
       <div class="level-banner">
         <button class="level-step-btn" id="btnPrevLevel" onclick="changeLevel(-1)" title="이전 레벨로 낮추기">◀</button>
@@ -1365,49 +1448,70 @@
       </div>
 
       <div class="match-sub-row">
-        <button class="mini-chip cho active" id="sideToggleBtn" onclick="toggleMySide()" title="클릭하여 내 진영(초/한)을 전환합니다">
+        <button class="mini-chip cho active" id="sideToggleBtn" onclick="toggleMySide()" title="대국 시작 전에만 내 진영(초/한)을 전환할 수 있습니다">
           🔵 내가 초 🔄
         </button>
 
-        <button class="mini-chip" id="formationBtn" onclick="openFormationModal()" style="color:#ffd166; border-color:rgba(245,158,11,0.45); flex:1; justify-content:center;" title="상차림 설정 열기">
+        <button class="mini-chip" id="formationBtn" onclick="openFormationModal()" style="color:#ffd166; border-color:rgba(245,158,11,0.45); flex:1; justify-content:center;" title="대국 시작 전에만 상차림 설정을 열 수 있습니다">
           ♟️ <span id="formationSummary">나:마상상마 / 상대:마상상마</span> ▾
         </button>
       </div>
     </section>
 
-    <!-- 2-B. 판편집 모드 상단: 기물 팔레트 -->
-    <section class="top-panel edit-panel" id="editPanel">
-      <!-- 초(楚) 기물 7종 -->
-      <div class="palette-row">
-        <div class="palette-piece selected" data-piece="k" onclick="selectPaletteItem('k', this)" title="초 궁"><img src="assets/janggi/blue_king.svg" alt="초궁" /></div>
-        <div class="palette-piece" data-piece="r" onclick="selectPaletteItem('r', this)" title="초 차"><img src="assets/janggi/blue_chariot.svg" alt="초차" /></div>
-        <div class="palette-piece" data-piece="c" onclick="selectPaletteItem('c', this)" title="초 포"><img src="assets/janggi/blue_cannon.svg" alt="초포" /></div>
-        <div class="palette-piece" data-piece="n" onclick="selectPaletteItem('n', this)" title="초 마"><img src="assets/janggi/blue_horse.svg" alt="초마" /></div>
-        <div class="palette-piece" data-piece="b" onclick="selectPaletteItem('b', this)" title="초 상"><img src="assets/janggi/blue_elephant.svg" alt="초상" /></div>
-        <div class="palette-piece" data-piece="a" onclick="selectPaletteItem('a', this)" title="초 사"><img src="assets/janggi/blue_advisor.svg" alt="초사" /></div>
-        <div class="palette-piece" data-piece="p" onclick="selectPaletteItem('p', this)" title="초 졸"><img src="assets/janggi/blue_pawn.svg" alt="초졸" /></div>
+    <!-- 2-B. 연습모드 상단: 판편집 · AI추천수(D15) · 패착복기 · 기보함 -->
+    <section class="top-panel practice-panel" id="practicePanel">
+      <div class="practice-toolbar">
+        <button class="practice-tool-btn" id="btnToggleEdit" onclick="toggleBoardEditInPractice()" title="기물 자유 배치 (판편집 열기/닫기)">🧩 판편집</button>
+        <button class="practice-tool-btn gold" id="btnAiRecommend" onclick="triggerPracticeAiRecommendation()" title="현재 국면에서 스톡피쉬 Depth 15 최선수 수순 자동 재현">🤖 AI추천수</button>
+        <button class="practice-tool-btn" id="btnOpenBlunder" onclick="openBlunderModal()" title="대국에서 내가 갑자기 불리해진 패착 지점 찾기">🎯 패착복기</button>
+        <button class="practice-tool-btn" id="btnOpenKifu" onclick="toggleKifuModal(true)" title="자동 저장된 대국 및 내 기보함 열기">📁 기보</button>
       </div>
-      <!-- 한(漢) 기물 7종 -->
-      <div class="palette-row">
-        <div class="palette-piece" data-piece="K" onclick="selectPaletteItem('K', this)" title="한 궁"><img src="assets/janggi/red_king.svg" alt="한궁" /></div>
-        <div class="palette-piece" data-piece="R" onclick="selectPaletteItem('R', this)" title="한 차"><img src="assets/janggi/red_chariot.svg" alt="한차" /></div>
-        <div class="palette-piece" data-piece="C" onclick="selectPaletteItem('C', this)" title="한 포"><img src="assets/janggi/red_cannon.svg" alt="한포" /></div>
-        <div class="palette-piece" data-piece="N" onclick="selectPaletteItem('N', this)" title="한 마"><img src="assets/janggi/red_horse.svg" alt="한마" /></div>
-        <div class="palette-piece" data-piece="B" onclick="selectPaletteItem('B', this)" title="한 상"><img src="assets/janggi/red_elephant.svg" alt="한상" /></div>
-        <div class="palette-piece" data-piece="A" onclick="selectPaletteItem('A', this)" title="한 사"><img src="assets/janggi/red_advisor.svg" alt="한사" /></div>
-        <div class="palette-piece" data-piece="P" onclick="selectPaletteItem('P', this)" title="한 병"><img src="assets/janggi/red_pawn.svg" alt="한병" /></div>
+
+      <!-- 연습모드 기본 서브줄 (판편집이 닫혀 있을 때 표시) -->
+      <div class="practice-sub-row" id="practiceSubRow">
+        <button class="mini-chip cho active" id="practiceSideToggleBtn" onclick="toggleMySide()" title="클릭하여 내 진영(초/한)을 전환합니다">
+          🔵 내가 초 🔄
+        </button>
+
+        <button class="mini-chip" id="practiceFormationBtn" onclick="openFormationModal()" style="color:#ffd166; border-color:rgba(245,158,11,0.45); flex:1; justify-content:center;" title="상차림 설정 열기">
+          ♟️ <span id="practiceFormationSummary">나:마상상마 / 상대:마상상마</span> ▾
+        </button>
       </div>
-      <!-- 편집 보조 버튼 -->
-      <div class="edit-tools-row">
-        <button class="edit-tool-btn" id="eraserBtn" onclick="selectPaletteItem('eraser', this)">🧹 지우개</button>
-        <button class="edit-tool-btn" onclick="resetToFormationBoard(true)">🔄 기본배치</button>
-        <button class="edit-tool-btn" onclick="clearBoardInEdit()">🗑️ 판비우기</button>
-        <button class="edit-tool-btn" onclick="promptFenInput()">📥 FEN입력</button>
-        <button class="edit-tool-btn" id="editTurnBtn" onclick="toggleEditTurn()">🔵 초 선공</button>
+
+      <!-- 연습모드 내 판편집 기물 팔레트 ([🧩 판편집] 클릭 시 펼쳐짐) -->
+      <div class="edit-panel" id="editPanel">
+        <!-- 초(楚) 기물 7종 -->
+        <div class="palette-row">
+          <div class="palette-piece selected" data-piece="k" onclick="selectPaletteItem('k', this)" title="초 궁"><img src="assets/janggi/blue_king.svg" alt="초궁" /></div>
+          <div class="palette-piece" data-piece="r" onclick="selectPaletteItem('r', this)" title="초 차"><img src="assets/janggi/blue_chariot.svg" alt="초차" /></div>
+          <div class="palette-piece" data-piece="c" onclick="selectPaletteItem('c', this)" title="초 포"><img src="assets/janggi/blue_cannon.svg" alt="초포" /></div>
+          <div class="palette-piece" data-piece="n" onclick="selectPaletteItem('n', this)" title="초 마"><img src="assets/janggi/blue_horse.svg" alt="초마" /></div>
+          <div class="palette-piece" data-piece="b" onclick="selectPaletteItem('b', this)" title="초 상"><img src="assets/janggi/blue_elephant.svg" alt="초상" /></div>
+          <div class="palette-piece" data-piece="a" onclick="selectPaletteItem('a', this)" title="초 사"><img src="assets/janggi/blue_advisor.svg" alt="초사" /></div>
+          <div class="palette-piece" data-piece="p" onclick="selectPaletteItem('p', this)" title="초 졸"><img src="assets/janggi/blue_pawn.svg" alt="초졸" /></div>
+        </div>
+        <!-- 한(漢) 기물 7종 -->
+        <div class="palette-row">
+          <div class="palette-piece" data-piece="K" onclick="selectPaletteItem('K', this)" title="한 궁"><img src="assets/janggi/red_king.svg" alt="한궁" /></div>
+          <div class="palette-piece" data-piece="R" onclick="selectPaletteItem('R', this)" title="한 차"><img src="assets/janggi/red_chariot.svg" alt="한차" /></div>
+          <div class="palette-piece" data-piece="C" onclick="selectPaletteItem('C', this)" title="한 포"><img src="assets/janggi/red_cannon.svg" alt="한포" /></div>
+          <div class="palette-piece" data-piece="N" onclick="selectPaletteItem('N', this)" title="한 마"><img src="assets/janggi/red_horse.svg" alt="한마" /></div>
+          <div class="palette-piece" data-piece="B" onclick="selectPaletteItem('B', this)" title="한 상"><img src="assets/janggi/red_elephant.svg" alt="한상" /></div>
+          <div class="palette-piece" data-piece="A" onclick="selectPaletteItem('A', this)" title="한 사"><img src="assets/janggi/red_advisor.svg" alt="한사" /></div>
+          <div class="palette-piece" data-piece="P" onclick="selectPaletteItem('P', this)" title="한 병"><img src="assets/janggi/red_pawn.svg" alt="한병" /></div>
+        </div>
+        <!-- 편집 보조 버튼 -->
+        <div class="edit-tools-row">
+          <button class="edit-tool-btn" id="eraserBtn" onclick="selectPaletteItem('eraser', this)">🧹 지우개</button>
+          <button class="edit-tool-btn" onclick="resetToFormationBoard(true)">🔄 기본배치</button>
+          <button class="edit-tool-btn" onclick="clearBoardInEdit()">🗑️ 판비우기</button>
+          <button class="edit-tool-btn" onclick="promptFenInput()">📥 FEN입력</button>
+          <button class="edit-tool-btn" id="editTurnBtn" onclick="toggleEditTurn()">🔵 초 선공</button>
+        </div>
       </div>
     </section>
 
-    <!-- 3. 점수 전광판 (기물 점수 + 스톡피쉬 AI 형세 게이지) & 턴 상태줄 -->
+    <!-- 3. 점수 전광판 (기물 점수 + 스톡피쉬 AI 형세 게이지) -->
     <section class="score-board">
       <div class="score-row">
         <div class="team-score cho">
@@ -1427,17 +1531,6 @@
       <div class="eval-bar-track" title="실시간 AI 형세 게이지">
         <div class="eval-bar-cho" id="evalBarCho" style="width: 50%;"></div>
       </div>
-
-      <div class="status-bar">
-        <div class="turn-badge">
-          <span class="turn-indicator" id="turnDot"></span>
-          <span id="statusText">대국 대기 중 · 초(楚) 차례</span>
-        </div>
-        <div style="display:flex; gap:4px; flex-shrink:0;">
-          <button class="mini-chip" onclick="copyCurrentFen()" title="현재 장기판 상태의 FEN 문자열을 클립보드에 복사합니다">📋 FEN 복사</button>
-          <button class="mini-chip" onclick="swapRoleAndFlip()" title="현재 국면 그대로 나와 AI의 진영을 바꾸고 판을 뒤집습니다">🔄 진영 교대</button>
-        </div>
-      </div>
     </section>
 
     <!-- 3-B. AI 최선수(Depth 15) 정답 수순 재현 배너 (재현 중일 때만 표시) -->
@@ -1452,15 +1545,28 @@
       </div>
     </div>
 
-    <!-- 4. 장기판 (스마트폰 화면 비율 자동 맞춤) -->
+    <!-- 4. 장기판 (화면 세로 중앙 자동 배치) -->
     <div class="board-container">
       <div class="board-grid" id="boardGrid"></div>
     </div>
 
-    <!-- 5. 하단 컨트롤 바 -->
+    <!-- 5. 하단 컨트롤 바 (안 A: 상태줄 + 수순 탐색(연습전용) + 대국 제어) -->
     <div class="bottom-controls">
-      <!-- 수순 이동 및 한수쉼 / 무르기 -->
-      <div class="nav-bar">
+      <!-- 턴 상태줄 & FEN 복사 (대국모드에서는 진영교대 숨김, 한수쉼 표시) -->
+      <div class="status-bar">
+        <div class="turn-badge">
+          <span class="turn-indicator" id="turnDot"></span>
+          <span id="statusText">대국 대기 중 · 초(楚) 차례</span>
+        </div>
+        <div style="display:flex; gap:4px; flex-shrink:0;">
+          <button class="mini-chip" id="btnPassMatch" onclick="handlePlayerPassTurn()" style="color:#fbbf24; border-color:rgba(245,158,11,0.45);" title="내 차례에 기물을 움직이지 않고 한 수 쉽니다">✋ 한수쉼</button>
+          <button class="mini-chip" onclick="copyCurrentFen()" title="현재 장기판 상태의 FEN 문자열을 클립보드에 복사합니다">📋 FEN 복사</button>
+          <button class="mini-chip" id="btnSwapRole" onclick="swapRoleAndFlip()" style="display:none;" title="연습모드 전용: 현재 국면 그대로 나와 AI의 진영을 바꾸고 판을 뒤집습니다">🔄 진영 교대</button>
+        </div>
+      </div>
+
+      <!-- 수순 이동 및 한수쉼 / 무르기 (연습모드에서만 표시, 대국모드에서는 숨김) -->
+      <div class="nav-bar hidden" id="navBar">
         <button class="nav-btn" id="btnFirst" onclick="stepToStart()" title="대국 첫 상태로 이동">⏮ 처음</button>
         <button class="nav-btn" id="btnBack" onclick="stepBackward()" title="1수 뒤로 이동">◀ 뒤로</button>
         <div class="move-counter" id="moveCounterText">0 / 0수</div>
@@ -1673,11 +1779,21 @@
 
     // 보드: row 0~3 = 초(소문자, rank 10~7), row 6~9 = 한(대문자, rank 4~1) (Fairy-Stockfish 표준)
     let board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-    let appMode = 'play';       // 'play' | 'edit'
+    let appMode = 'match';      // 'match'(실전 대국모드) | 'practice'(자유 연습모드)
+    let isBoardEditing = false; // 연습모드 내 판편집 팔레트 활성화 여부
+    let hasAutoSavedCurrentMatch = false; // 현재 실전 대국 종료 시 기보 자동 저장 완료 여부
     let gameState = 'idle';     // 'idle' | 'playing' | 'paused' | 'ended'
     let currentTurn = 'b';      // 'b'(초) | 'w'(한)
     let mySide = 'b';           // 'b'(내가 초) | 'w'(내가 한)
     let isFlipped = true;       // true: 초(row 0~3)가 화면 하단에 표시됨 / false: 한(row 6~9)이 화면 하단에 표시됨
+
+    function isMatchInProgress() {
+      return appMode === 'match' && (gameState === 'playing' || (moveHistory.length > 0 && gameState !== 'ended'));
+    }
+
+    function isEditingBoardNow() {
+      return appMode === 'practice' && isBoardEditing;
+    }
 
     let selectedCell = null;    // { col, row }
     let selectedPalette = 'k';  // 판편집 모드에서 선택된 기물
@@ -2196,6 +2312,7 @@
       stopAiThinking();
       hidePvBanner();
       savedOriginalHistory = null;
+      hasAutoSavedCurrentMatch = false;
       board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
 
       // 초(Cho - 소문자, row 0~3)
@@ -2247,6 +2364,51 @@
       return { cho, han };
     }
 
+    function updateModePanelsUI() {
+      const btnMatch = document.getElementById('btnMatchMode');
+      const btnPractice = document.getElementById('btnPracticeMode');
+      const matchLocked = isMatchInProgress();
+
+      if (btnMatch) {
+        btnMatch.classList.toggle('active', appMode === 'match');
+      }
+      if (btnPractice) {
+        btnPractice.classList.toggle('active', appMode === 'practice');
+        btnPractice.classList.toggle('locked', matchLocked);
+        btnPractice.innerHTML = matchLocked ? '🔒 연습모드' : '🧘 연습모드';
+      }
+
+      const playPanel = document.getElementById('playPanel');
+      const practicePanel = document.getElementById('practicePanel');
+      if (playPanel) playPanel.classList.toggle('hidden', appMode !== 'match');
+      if (practicePanel) practicePanel.classList.toggle('active', appMode === 'practice');
+
+      const btnToggleEdit = document.getElementById('btnToggleEdit');
+      const practiceSubRow = document.getElementById('practiceSubRow');
+      const editPanel = document.getElementById('editPanel');
+      if (btnToggleEdit) {
+        btnToggleEdit.classList.toggle('active', isBoardEditing);
+        btnToggleEdit.innerHTML = isBoardEditing ? '✅ 편집완료' : '🧩 판편집';
+      }
+      if (practiceSubRow) practiceSubRow.classList.toggle('hidden', isBoardEditing);
+      if (editPanel) editPanel.classList.toggle('active', isBoardEditing);
+
+      const navBar = document.getElementById('navBar');
+      if (navBar) navBar.classList.toggle('hidden', appMode === 'match');
+
+      const btnPassMatch = document.getElementById('btnPassMatch');
+      if (btnPassMatch) btnPassMatch.style.display = appMode === 'match' ? 'inline-flex' : 'none';
+
+      const btnSwapRole = document.getElementById('btnSwapRole');
+      if (btnSwapRole) btnSwapRole.style.display = appMode === 'practice' ? 'inline-flex' : 'none';
+
+      // 실전 대국 진행 중일 때 진영/상차림 변경 버튼 잠금
+      const sideBtn = document.getElementById('sideToggleBtn');
+      const formBtn = document.getElementById('formationBtn');
+      if (sideBtn) sideBtn.disabled = matchLocked;
+      if (formBtn) formBtn.disabled = matchLocked;
+    }
+
     function updateScoreAndStatusUI() {
       const { cho, han } = calculateMaterialScores();
       document.getElementById('choScoreText').innerText = `${cho.toFixed(1)}점`;
@@ -2257,22 +2419,26 @@
 
       const turnName = currentTurn === 'b' ? '초(楚)' : '한(漢)';
       const statusEl = document.getElementById('statusText');
+      const moveSuffix = appMode === 'match' ? ` · ${currentPly}/200수` : '';
 
-      if (appMode === 'edit') {
+      if (isEditingBoardNow()) {
         statusEl.innerText = `🧩 판편집 중 · 선공: ${turnName}`;
       } else if (isAiThinking) {
-        statusEl.innerText = `🤖 스톡피쉬(${turnName}) 수읽기 중...`;
+        statusEl.innerText = `🤖 스톡피쉬(${turnName}) 수읽기 중...${moveSuffix}`;
       } else if (gameState === 'paused') {
-        statusEl.innerText = `⏸ 일시정지됨 · ${turnName} 차례`;
+        statusEl.innerText = `⏸ 일시정지됨 · ${turnName} 차례${moveSuffix}`;
       } else if (gameState === 'ended') {
         // 유지
       } else {
         const who = currentTurn === mySide ? '내 차례' : 'AI 차례';
         const checkInfo = findKingCheckInfo(board, currentTurn === 'b' ? 'cho' : 'han');
         if (checkInfo.inCheck) {
-          statusEl.innerText = `🚨 [장군!] ${turnName} (${who}) 멍군 필요!`;
+          statusEl.innerText = `🚨 [장군!] ${turnName} (${who}) 멍군 필요!${moveSuffix}`;
         } else {
-          statusEl.innerText = `${gameState === 'playing' ? '⚔️ 대국 중' : '대국 대기'} · ${turnName} (${who})`;
+          const modeLabel = appMode === 'match'
+            ? (gameState === 'playing' ? '⚔️ 대국 중' : '대국 대기')
+            : (gameState === 'playing' ? '🧘 연습 중' : '연습 대기');
+          statusEl.innerText = `${modeLabel} · ${turnName} (${who})${moveSuffix}`;
         }
       }
 
@@ -2287,22 +2453,25 @@
       document.getElementById('btnBack').disabled = currentPly <= 0;
       document.getElementById('btnForward').disabled = currentPly >= moveHistory.length;
       document.getElementById('btnUndo').disabled = currentPly <= 0 || isAiThinking;
+
+      const myTeamName = mySide === 'b' ? 'cho' : 'han';
+      const inCheckNow = findKingCheckInfo(board, myTeamName).inCheck;
+      const passDisabled = isEditingBoardNow() || gameState === 'ended' || isAiThinking || currentTurn !== mySide || inCheckNow;
+
       const passBtn = document.getElementById('btnPass');
-      if (passBtn) {
-        const myTeamName = mySide === 'b' ? 'cho' : 'han';
-        const inCheckNow = findKingCheckInfo(board, myTeamName).inCheck;
-        passBtn.disabled = appMode !== 'play' || gameState === 'ended' || isAiThinking || currentTurn !== mySide || inCheckNow;
-      }
+      if (passBtn) passBtn.disabled = passDisabled;
+      const passMatchBtn = document.getElementById('btnPassMatch');
+      if (passMatchBtn) passMatchBtn.disabled = passDisabled;
 
       const startBtn = document.getElementById('btnStart');
       if (gameState === 'playing') {
-        startBtn.innerText = '⚔️ 대국중';
+        startBtn.innerText = appMode === 'match' ? '⚔️ 대국중' : '🧘 연습중';
         startBtn.classList.add('playing');
       } else if (gameState === 'paused' || (currentPly > 0 && gameState !== 'ended')) {
         startBtn.innerText = '▶ 이어두기';
         startBtn.classList.remove('playing');
       } else {
-        startBtn.innerText = '▶ 게임시작';
+        startBtn.innerText = appMode === 'match' ? '▶ 게임시작' : '▶ 연습시작';
         startBtn.classList.remove('playing');
       }
 
@@ -2322,9 +2491,9 @@
       const currentKingCheck = currentTurn === 'b' ? choCheck : hanCheck;
 
       let legalMoves = [];
-      if (appMode === 'play' && selectedCell) {
+      if (!isEditingBoardNow() && selectedCell) {
         legalMoves = getLegalMovesForSelectedPiece(selectedCell.col, selectedCell.row);
-      } else if (appMode === 'edit' && (selectedPalette === 'k' || selectedPalette === 'a' || selectedPalette === 'K' || selectedPalette === 'A')) {
+      } else if (isEditingBoardNow() && (selectedPalette === 'k' || selectedPalette === 'a' || selectedPalette === 'K' || selectedPalette === 'A')) {
         // 판편집 모드에서 궁/사를 선택했을 때 배치 가능한 궁성 9칸을 가이드 점으로 표시
         const isChoPiece = selectedPalette === 'k' || selectedPalette === 'a';
         for (let pr = isChoPiece ? 0 : 7; pr <= (isChoPiece ? 2 : 9); pr++) {
@@ -2396,27 +2565,29 @@
     }
 
     function updateSideToggleUI() {
-      const btn = document.getElementById('sideToggleBtn');
-      if (!btn) return;
-      if (mySide === 'b') {
-        btn.className = 'mini-chip cho active';
-        btn.innerHTML = '🔵 내가 초 🔄';
-      } else {
-        btn.className = 'mini-chip han active';
-        btn.innerHTML = '🔴 내가 한 🔄';
-      }
+      const cls = mySide === 'b' ? 'mini-chip cho active' : 'mini-chip han active';
+      const label = mySide === 'b' ? '🔵 내가 초 🔄' : '🔴 내가 한 🔄';
+      ['sideToggleBtn', 'practiceSideToggleBtn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.className = cls;
+          btn.innerHTML = label;
+        }
+      });
     }
 
     function updateFormationSummaryUI() {
-      const el = document.getElementById('formationSummary');
-      if (el) {
-        const myForm = mySide === 'b' ? selectedChoFormation : selectedHanFormation;
-        const oppForm = mySide === 'b' ? selectedHanFormation : selectedChoFormation;
-        el.innerText = `나:${myForm} / 상대:${oppForm}`;
-      }
+      const myForm = mySide === 'b' ? selectedChoFormation : selectedHanFormation;
+      const oppForm = mySide === 'b' ? selectedHanFormation : selectedChoFormation;
+      const text = `나:${myForm} / 상대:${oppForm}`;
+      ['formationSummary', 'practiceFormationSummary'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+      });
     }
 
     function updateAllUI() {
+      updateModePanelsUI();
       renderBoard();
       updateScoreAndStatusUI();
       updateLevelUI();
@@ -2432,7 +2603,7 @@
       unlockAudio();
 
       // 1) 판편집 모드 (장기 기물 배치 장소 및 최대 개수 규칙 검증)
-      if (appMode === 'edit') {
+      if (isEditingBoardNow()) {
         if (selectedPalette === 'eraser') {
           board[row][col] = null;
         } else if (selectedPalette) {
@@ -2478,14 +2649,16 @@
         return;
       }
 
-      // 2) 대국 모드
+      // 2) 대국모드 & 연습모드
       if (isAiThinking) {
         showToast('🤖 AI가 수읽기 중입니다. 잠시만 기다려주세요.');
         return;
       }
 
       if (gameState === 'ended') {
-        showToast('종료된 대국입니다. [새 게임]이나 [뒤로]를 눌러주세요.');
+        showToast(appMode === 'match'
+          ? '종료된 대국입니다. [새게임]을 눌러주세요.'
+          : '종료된 연습 대국입니다. [새게임]이나 [뒤로/무르기]를 눌러주세요.');
         return;
       }
 
@@ -2534,7 +2707,7 @@
         }
       }
 
-      // 과거 수순(뒤로 가기 상태)에서 직접 착수한 경우: 이후 수순을 잘라내고 현재 지점부터 분기
+      // 연습모드에서 과거 수순(뒤로 가기 상태)에서 직접 착수한 경우: 이후 수순을 잘라내고 현재 지점부터 분기
       if (currentPly < moveHistory.length) {
         moveHistory = moveHistory.slice(0, currentPly);
       }
@@ -2630,12 +2803,19 @@
         gameState = 'ended';
         const winner = moverTeam === 'cho' ? '🔵 초(楚)' : '🔴 한(漢)';
         const myTeamName = mySide === 'b' ? 'cho' : 'han';
-        if (moverTeam === myTeamName) {
-          handlePlayerWinLevelUp(winner);
+        if (appMode === 'match') {
+          if (moverTeam === myTeamName) {
+            autoSaveMatchToKifu('외통승');
+            handlePlayerWinLevelUp(winner);
+          } else {
+            document.getElementById('statusText').innerText = `🏆 외통수! ${winner} 승리!`;
+            showToast(`🏆 외통수! ${winner} 승리! (기보 자동 저장됨)`);
+            autoSaveMatchToKifu('외통패');
+            handlePlayerLossLadder('checkmate');
+          }
         } else {
-          document.getElementById('statusText').innerText = `🏆 외통수! ${winner} 승리!`;
-          showToast(`🏆 외통수! ${winner} 승리!`);
-          handlePlayerLossLadder('checkmate');
+          document.getElementById('statusText').innerText = `🧘 [연습 종료] 외통수! ${winner} 승리! (등급 무관)`;
+          showToast(`🧘 [연습 종료] 외통수! ${winner} 승리!`);
         }
         updateAllUI();
         saveAutoState();
@@ -2657,7 +2837,7 @@
       saveAutoState();
 
       // 대국 진행 중이고 다음 차례가 AI이면 스톡피쉬 호출
-      if (appMode === 'play' && gameState === 'playing' && currentTurn !== mySide) {
+      if (!isEditingBoardNow() && gameState === 'playing' && currentTurn !== mySide) {
         scheduleAiMove(450);
       }
       return true;
@@ -2665,8 +2845,8 @@
 
     function handlePlayerPassTurn() {
       unlockAudio();
-      if (appMode !== 'play') {
-        showToast('대국 모드에서만 한수쉼을 사용할 수 있습니다.');
+      if (isEditingBoardNow()) {
+        showToast('판편집 중에는 한수쉼을 사용할 수 없습니다.');
         return;
       }
       if (isAiThinking || currentTurn !== mySide) {
@@ -2738,7 +2918,7 @@
         return;
       }
 
-      if (appMode === 'play' && gameState === 'playing' && currentTurn !== mySide) {
+      if (!isEditingBoardNow() && gameState === 'playing' && currentTurn !== mySide) {
         scheduleAiMove(450);
       }
     }
@@ -2826,13 +3006,19 @@
       const isPlayerWin = winnerTeam === myTeamName;
 
       const scoreDetail = `(초 ${cho.toFixed(1)}점 vs 한 ${han.toFixed(1)}점 · 덤 1.5점 포함)`;
-      document.getElementById('statusText').innerText = `🏆 ${reason} · ${winnerLabel} 점수승! ${scoreDetail}`;
-
-      if (isPlayerWin) {
-        handlePlayerWinLevelUp(`${winnerLabel} 점수승`, 'score', reason);
+      if (appMode === 'match') {
+        document.getElementById('statusText').innerText = `🏆 ${reason} · ${winnerLabel} 점수승! ${scoreDetail}`;
+        if (isPlayerWin) {
+          autoSaveMatchToKifu('점수승');
+          handlePlayerWinLevelUp(`${winnerLabel} 점수승`, 'score', reason);
+        } else {
+          autoSaveMatchToKifu('점수패');
+          handlePlayerLossLadder('point_defeat', reason);
+          showToast(`🏆 대국 종료: ${winnerLabel} 점수승! ${scoreDetail} (기보 자동 저장됨)`);
+        }
       } else {
-        handlePlayerLossLadder('point_defeat', reason);
-        showToast(`🏆 대국 종료: ${winnerLabel} 점수승! ${scoreDetail}`);
+        document.getElementById('statusText').innerText = `🧘 [연습 종료] ${reason} · ${winnerLabel} 점수승! ${scoreDetail}`;
+        showToast(`🧘 [연습 종료] ${winnerLabel} 점수승! ${scoreDetail}`);
       }
 
       updateAllUI();
@@ -2871,8 +3057,9 @@
       }
     }
 
-    // ⏮ 처음으로 (0수로 이동)
+    // ⏮ 처음으로 (0수로 이동 - 연습모드 전용)
     function stepToStart() {
+      if (appMode === 'match') return;
       if (currentPly <= 0) return;
       stopAiThinking();
       if (gameState === 'playing') gameState = 'paused';
@@ -2880,8 +3067,9 @@
       updateAllUI();
     }
 
-    // ◀ 뒤로 (1수 뒤로)
+    // ◀ 뒤로 (1수 뒤로 - 연습모드 전용)
     function stepBackward() {
+      if (appMode === 'match') return;
       if (currentPly <= 0) return;
       stopAiThinking();
       if (gameState === 'playing') gameState = 'paused';
@@ -2889,8 +3077,9 @@
       updateAllUI();
     }
 
-    // 앞으로 ⏭
+    // 앞으로 ⏭ (연습모드 전용)
     function stepForward() {
+      if (appMode === 'match') return;
       if (currentPly >= moveHistory.length) return;
       stopAiThinking();
       if (gameState === 'playing') gameState = 'paused';
@@ -2899,8 +3088,9 @@
       updateAllUI();
     }
 
-    // ↩ 무르기 (내 차례일 때는 AI 응수 + 내 수 2수를 물러 즉시 다시 둘 수 있게 함)
+    // ↩ 무르기 (연습모드 전용: 내 차례일 때는 AI 응수 + 내 수 2수를 물러 즉시 다시 둘 수 있게 함)
     function undoMove() {
+      if (appMode === 'match') return;
       if (currentPly <= 0 || isAiThinking) return;
       stopAiThinking();
 
@@ -2920,8 +3110,8 @@
     // =========================================================================
     function handleStartButton() {
       unlockAudio();
-      if (appMode === 'edit') {
-        switchMode('play');
+      if (isEditingBoardNow()) {
+        toggleBoardEditInPractice(false);
       }
 
       if (gameState === 'playing') {
@@ -2935,7 +3125,7 @@
         resetToFormationBoard(false);
         gameState = 'playing';
         updateAllUI();
-        showToast('⚔️ 새 대국이 시작되었습니다!');
+        showToast(appMode === 'match' ? '⚔️ 새 실전 대국이 시작되었습니다!' : '🧘 새 연습 대국이 시작되었습니다!');
         if (currentTurn !== mySide) {
           scheduleAiMove(300);
         }
@@ -2948,7 +3138,11 @@
       }
       gameState = 'playing';
       updateAllUI();
-      showToast(currentPly > 0 ? '▶️ 현재 수순부터 대국을 이어갑니다!' : '⚔️ 대국이 시작되었습니다!');
+      showToast(
+        currentPly > 0
+          ? '▶️ 현재 수순부터 대국을 이어갑니다!'
+          : (appMode === 'match' ? '⚔️ 실전 대국이 시작되었습니다!' : '🧘 연습 대국이 시작되었습니다!')
+      );
 
       if (currentTurn !== mySide) {
         scheduleAiMove(300);
@@ -2984,7 +3178,11 @@
       gameState = 'ended';
       const winner = mySide === 'b' ? '🔴 한(AI)' : '🔵 초(AI)';
       document.getElementById('statusText').innerText = `🏳️ 기권 · ${winner} 승리!`;
-      handlePlayerLossLadder('resign');
+
+      if (appMode === 'match') {
+        autoSaveMatchToKifu('기권');
+        handlePlayerLossLadder('resign');
+      }
       updateAllUI();
       saveAutoState();
       showToast(`🏳️ 기권하셨습니다. ${winner} 승리!`);
@@ -2992,10 +3190,18 @@
 
     // 내 진영(초/한) 토글 전환
     function toggleMySide() {
+      if (isMatchInProgress()) {
+        showToast('🔒 실전 대국 진행 중에는 진영을 변경할 수 없습니다.');
+        return;
+      }
       selectMySide(mySide === 'b' ? 'w' : 'b');
     }
 
     function selectMySide(side) {
+      if (isMatchInProgress()) {
+        showToast('🔒 실전 대국 진행 중에는 진영을 변경할 수 없습니다.');
+        return;
+      }
       mySide = side === 'w' ? 'w' : 'b';
       isFlipped = (mySide === 'b'); // 내 진영이 항상 화면 아래쪽에 오도록 회전
 
@@ -3006,8 +3212,8 @@
       const label = mySide === 'b' ? '🔵 내가 초' : '🔴 내가 한';
       showToast(`${label} 입장으로 전환되었습니다.`);
 
-      // 대국 진행 중이고 이제 AI 차례가 되었다면 즉시 AI 착수
-      if (appMode === 'play' && gameState === 'playing' && currentTurn !== mySide) {
+      // 연습모드 대국 진행 중이고 이제 AI 차례가 되었다면 즉시 AI 착수
+      if (!isEditingBoardNow() && gameState === 'playing' && currentTurn !== mySide) {
         scheduleAiMove(400);
       }
     }
@@ -3016,44 +3222,85 @@
       toggleMySide();
     }
 
-    function toggleMode() {
-      switchMode(appMode === 'play' ? 'edit' : 'play');
+    // 대국모드 <-> 연습모드 전환
+    function switchAppMode(targetMode, keepCurrentGameForReview = false) {
+      if (targetMode !== 'match' && targetMode !== 'practice') return;
+      if (appMode === targetMode && !keepCurrentGameForReview) return;
+
+      // 대국모드에서 대국 진행 중일 때 연습모드로의 이탈 차단 (방법 2)
+      if (appMode === 'match' && targetMode === 'practice' && isMatchInProgress()) {
+        showToast('🔒 실전 대국 중에는 연습모드로 이동할 수 없습니다. 대국을 마치거나 [🏳️ 기권] 후 이용해 주세요.');
+        return;
+      }
+
+      stopAiThinking();
+      hidePvBanner();
+      const prevMode = appMode;
+      appMode = targetMode;
+
+      if (targetMode === 'practice') {
+        isBoardEditing = false;
+        selectedCell = null;
+        if (prevMode === 'match') {
+          // 대국 종료 직후 연습모드로 넘어온 경우 방금 둔 기보를 그대로 복기할 수 있게 유지
+          if (moveHistory.length > 0) {
+            gameState = 'paused';
+            showToast('🧘 연습모드로 전환되었습니다. 방금 둔 대국을 자유롭게 복기·연구해 보세요!');
+          } else {
+            gameState = 'idle';
+            showToast('🧘 연습모드입니다. 자유 대국·판편집·AI추천수·기보 연구가 가능합니다.');
+          }
+        }
+      } else {
+        // 연습모드 -> 대국모드 복귀 시: 편집된 판이나 연습 국면이 랭크전에 영향을 주지 않도록 깨끗한 정식 상차림으로 초기화
+        isBoardEditing = false;
+        selectedCell = null;
+        resetToFormationBoard(false);
+        showToast('⚔️ 실전 대국모드로 전환되었습니다. 진영과 상차림을 확인 후 대국을 시작하세요!');
+      }
+
+      updateAllUI();
+      saveAutoState();
     }
 
-    function switchMode(mode) {
+    // 연습모드 내 [🧩 판편집] 토글
+    function toggleBoardEditInPractice(forceState) {
+      if (appMode !== 'practice') return;
       stopAiThinking();
-      const prevMode = appMode;
-      appMode = mode;
+      hidePvBanner();
 
-      const modeBtn = document.getElementById('modeToggleBtn');
-      if (modeBtn) {
-        if (mode === 'play') {
-          modeBtn.className = 'menu-btn mode-toggle-btn play';
-          modeBtn.innerHTML = '⚔️ 대국';
-          modeBtn.title = '대국 모드 (클릭 시 판편집으로 전환)';
-        } else {
-          modeBtn.className = 'menu-btn mode-toggle-btn edit';
-          modeBtn.innerHTML = '🧩 판편집';
-          modeBtn.title = '판편집 모드 (클릭 시 대국으로 전환)';
-        }
-      }
-      document.getElementById('playPanel').classList.toggle('hidden', mode !== 'play');
-      document.getElementById('editPanel').classList.toggle('active', mode === 'edit');
-
+      const nextState = typeof forceState === 'boolean' ? forceState : !isBoardEditing;
+      const prevState = isBoardEditing;
+      isBoardEditing = nextState;
       selectedCell = null;
-      if (mode === 'edit') {
+
+      if (isBoardEditing) {
         gameState = 'idle';
-        showToast('🧩 판편집 모드: 기물을 선택해 장기판을 터치하세요.');
-      } else if (prevMode === 'edit') {
+        showToast('🧩 판편집 ON: 기물을 선택해 장기판을 터치하세요.');
+      } else if (prevState) {
         initialFen = getBoardFen();
         moveHistory = [];
         currentPly = 0;
         lastMove = null;
         gameState = 'idle';
-        showToast('⚔️ 편집한 국면으로 대국할 준비가 되었습니다. [게임시작]을 눌러주세요.');
+        showToast('✅ 판편집 완료! [▶ 게임시작] 또는 [🤖 AI추천수]를 눌러보세요.');
       }
       updateAllUI();
       saveAutoState();
+    }
+
+    // 연습모드 내 [🤖 AI추천수] 버튼 실행 (현재 국면에서 Depth 15 최선 수순 자동 재현)
+    function triggerPracticeAiRecommendation() {
+      if (appMode !== 'practice') return;
+      if (isBoardEditing) {
+        isBoardEditing = false;
+        initialFen = getBoardFen();
+        moveHistory = [];
+        currentPly = 0;
+        lastMove = null;
+        gameState = 'idle';
+      }
+      startAiBestReplayAtPly(currentPly);
     }
 
     function selectPaletteItem(piece, el) {
@@ -3066,7 +3313,7 @@
       } else if (el) {
         el.classList.add('selected');
       }
-      if (appMode === 'edit') {
+      if (isEditingBoardNow()) {
         renderBoard();
       }
     }
@@ -3137,6 +3384,10 @@
     // 8. 상차림 2단계 팝업 (1단계 초나라 -> 2단계 한나라)
     // =========================================================================
     function openFormationModal() {
+      if (isMatchInProgress()) {
+        showToast('🔒 실전 대국 진행 중에는 상차림을 변경할 수 없습니다.');
+        return;
+      }
       formationStep = 'cho';
       const badge = document.getElementById('formationStepBadge');
       badge.className = 'formation-step-badge cho';
@@ -3246,6 +3497,7 @@
       const subEl = document.getElementById('levelBadgeSub');
       const prevBtn = document.getElementById('btnPrevLevel');
       const nextBtn = document.getElementById('btnNextLevel');
+      const lockedByMatch = isMatchInProgress();
 
       if (titleEl) {
         if (info.isBoss) {
@@ -3270,17 +3522,21 @@
         subEl.innerText = sub;
       }
       if (prevBtn) {
-        prevBtn.disabled = !getLadderStepDown(d, s);
+        prevBtn.disabled = lockedByMatch || !getLadderStepDown(d, s);
       }
       if (nextBtn) {
         const up = getLadderStepUp(d, s);
         const isLocked = !up || up.depth > ladderState.maxDepth;
-        nextBtn.disabled = isLocked;
+        nextBtn.disabled = lockedByMatch || isLocked;
         nextBtn.innerText = isLocked ? '🔒' : '▶';
       }
     }
 
     function changeLevel(delta) {
+      if (isMatchInProgress()) {
+        showToast('🔒 실전 대국 진행 중에는 난이도를 변경할 수 없습니다.');
+        return;
+      }
       const step = delta > 0
         ? getLadderStepUp(ladderState.depth, ladderState.skill)
         : getLadderStepDown(ladderState.depth, ladderState.skill);
@@ -3309,6 +3565,10 @@
     }
 
     function confirmResetLadder() {
+      if (isMatchInProgress()) {
+        showToast('🔒 실전 대국 진행 중에는 등급을 초기화할 수 없습니다.');
+        return;
+      }
       const msg = `⚠️ 헌터 등급을 완전 초기화하시겠습니까?\n\n` +
         `· 현재 진행도: ${formatLadderLabel(ladderState.depth, ladderState.skill)} (Depth ${ladderState.depth} · Skill ${ladderState.skill})\n` +
         `· 최고 해금 등급: ${getHunterTier(ladderState.maxDepth)}\n\n` +
@@ -3500,9 +3760,9 @@
 
       if (blunderBtn) {
         blunderBtn.style.display = moveHistory.length >= 4 ? 'block' : 'none';
+        blunderBtn.innerText = '🧘 연습모드에서 방금 판 패착 복기 & AI 최선수 확인';
         blunderBtn.onclick = () => {
-          closeLevelUpModal();
-          openBlunderModal();
+          openBlunderFromModal();
         };
       }
 
@@ -3522,6 +3782,9 @@
 
     function openBlunderFromModal() {
       closeLevelUpModal();
+      if (appMode === 'match') {
+        switchAppMode('practice', true);
+      }
       openBlunderModal();
     }
 
@@ -3747,7 +4010,7 @@
     }
 
     function requestStockfishMove() {
-      if (appMode !== 'play' || gameState !== 'playing' || currentTurn === mySide) return;
+      if (isEditingBoardNow() || gameState !== 'playing' || currentTurn === mySide) return;
       if (isAiThinking) return;
 
       if (!wasmReady) {
@@ -3800,12 +4063,20 @@
       if (!bestmove || bestmove === '(none)' || bestmove === 'none') {
         gameState = 'ended';
         const winner = currentTurn === 'b' ? '🔴 한(漢)' : '🔵 초(楚)';
-        if (currentTurn !== mySide) {
-          handlePlayerWinLevelUp(winner);
+        const isMyWin = currentTurn !== mySide;
+
+        if (appMode === 'match') {
+          autoSaveMatchToKifu(isMyWin ? '외통승' : '외통패');
+          if (isMyWin) {
+            handlePlayerWinLevelUp(winner);
+          } else {
+            document.getElementById('statusText').innerText = `🏆 외통수! ${winner} 승리!`;
+            showToast(`🏆 대국 종료! ${winner} 승리!`);
+            handlePlayerLossLadder('checkmate');
+          }
         } else {
-          document.getElementById('statusText').innerText = `🏆 외통수! ${winner} 승리!`;
-          showToast(`🏆 대국 종료! ${winner} 승리!`);
-          handlePlayerLossLadder('checkmate');
+          document.getElementById('statusText').innerText = `🏆 연습 대국 종료 · 외통수 ${winner} 승리!`;
+          showToast(`🧘 연습 대국 종료! ${winner} 외통수 승리!`);
         }
         updateAllUI();
         saveAutoState();
@@ -3951,7 +4222,8 @@
       stopAiThinking();
       hidePvBanner();
 
-      if (appMode !== 'play') switchMode('play');
+      appMode = 'practice';
+      isBoardEditing = false;
       moveHistory = JSON.parse(JSON.stringify(savedOriginalHistory.slice(0, branchPly)));
       reconstructBoardAtPly(branchPly);
       gameState = 'playing';
@@ -3974,7 +4246,8 @@
       closeBlunderModal();
       stopAiThinking();
 
-      if (appMode !== 'play') switchMode('play');
+      appMode = 'practice';
+      isBoardEditing = false;
       lastPvBranchPly = branchPly;
       const baseHist = savedOriginalHistory ? savedOriginalHistory.slice(0, branchPly) : moveHistory.slice(0, branchPly);
       moveHistory = JSON.parse(JSON.stringify(baseHist));
@@ -4183,6 +4456,7 @@
     function saveAutoState() {
       try {
         const data = {
+          appMode,
           initialFen: initialFen || getBoardFen(),
           moveHistory,
           currentPly,
@@ -4204,9 +4478,14 @@
         const data = JSON.parse(raw);
         if (!data || !data.initialFen) return false;
 
+        appMode = data.appMode === 'practice' ? 'practice' : 'match';
+        isBoardEditing = false;
         initialFen = data.initialFen;
         moveHistory = Array.isArray(data.moveHistory) ? data.moveHistory : [];
         currentPly = typeof data.currentPly === 'number' ? Math.min(data.currentPly, moveHistory.length) : moveHistory.length;
+        if (appMode === 'match') {
+          currentPly = moveHistory.length;
+        }
         mySide = data.mySide === 'w' ? 'w' : 'b';
         isFlipped = (mySide === 'b');
 
@@ -4269,6 +4548,33 @@
       document.getElementById('kifuModal').classList.toggle('open', open);
     }
 
+    // 실전 대국모드에서 대국이 종료될 때 자동으로 기보함에 기록 저장
+    function autoSaveMatchToKifu(resultTag = '종료') {
+      if (appMode !== 'match') return;
+      if (moveHistory.length === 0 || hasAutoSavedCurrentMatch) return;
+      hasAutoSavedCurrentMatch = true;
+
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const cfg = getCurrentLevelConfig(currentLevel);
+      const sideLabel = mySide === 'b' ? '내가 초' : '내가 한';
+      const title = `[실전·${resultTag}] ${sideLabel} vs ${cfg.label} · ${moveHistory.length}수`;
+
+      const list = getSavedKifuList();
+      list.unshift({
+        id: 'kifu_' + Date.now(),
+        title,
+        date: dateStr,
+        mySide,
+        level: currentLevel,
+        choFormation: selectedChoFormation,
+        hanFormation: selectedHanFormation,
+        initialFen: initialFen || getBoardFen(),
+        moveHistory: JSON.parse(JSON.stringify(moveHistory))
+      });
+      setSavedKifuList(list);
+    }
+
     function saveCurrentGameToKifuList() {
       const input = document.getElementById('kifuTitleInput');
       const now = new Date();
@@ -4315,13 +4621,14 @@
       if (item.choFormation) selectedChoFormation = item.choFormation;
       if (item.hanFormation) selectedHanFormation = item.hanFormation;
 
-      if (appMode !== 'play') switchMode('play');
+      appMode = 'practice';
+      isBoardEditing = false;
       reconstructBoardAtPly(currentPly);
       gameState = 'paused';
       updateAllUI();
       saveAutoState();
       toggleKifuModal(false);
-      showToast(`📂 '${item.title}' 기보를 불러왔습니다.`);
+      showToast(`📂 '${item.title}' 기보를 연습모드로 불러왔습니다.`);
     }
 
     function deleteKifuById(id) {
