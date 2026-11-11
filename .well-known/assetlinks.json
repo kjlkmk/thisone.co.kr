@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "kr.co.thisone.twa",
+      "sha256_cert_fingerprints": [
+        "E0:6A:98:44:06:F1:BC:B7:0A:D9:81:EB:C2:06:49:63:7B:7B:A5:A2:C4:0C:5E:BA:3E:E5:5C:D8:B4:AE:26:AC"
+      ]
+    }
+  }
+]

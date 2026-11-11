@@ -59,5 +59,8 @@ paginate_path: "/blog/page:num/"
 #   - vendor/gems/
 #   - vendor/ruby/
 
+include:
+  - .well-known
+
 exclude:
   - videos/
