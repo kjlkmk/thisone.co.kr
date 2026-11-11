@@ -360,17 +360,24 @@
       justify-content: space-between;
       padding-top: 6px;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
-      gap: 6px;
+      gap: 4px;
+      width: 100%;
     }
 
     .practice-sub-row.hidden {
       display: none;
     }
 
+    .practice-sub-row .mini-chip {
+      padding: 5px 7px;
+      font-size: 0.72rem;
+    }
+
     .mini-chip.ai-vs-ai {
       background: rgba(168, 85, 247, 0.16);
       color: #d8b4fe;
       border-color: rgba(168, 85, 247, 0.45);
+      flex-shrink: 0;
     }
 
     /* 연습모드 AI vs AI 설정 바 */
@@ -380,7 +387,8 @@
       justify-content: space-between;
       padding-top: 6px;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
-      gap: 4px;
+      gap: 3px;
+      width: 100%;
     }
 
     .ai-vs-ai-bar.active {
@@ -390,10 +398,10 @@
     .ai-side-cfg {
       display: flex;
       align-items: center;
-      gap: 3px;
-      padding: 3px 6px;
+      gap: 2px;
+      padding: 3px 4px;
       border-radius: 7px;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 800;
       flex: 1;
       min-width: 0;
@@ -416,27 +424,29 @@
       background: #0f1520;
       color: #f1f5f9;
       border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 5px;
-      padding: 2px 3px;
-      font-size: 0.7rem;
+      border-radius: 4px;
+      padding: 2px 1px;
+      font-size: 0.67rem;
       font-weight: 800;
       font-family: inherit;
       cursor: pointer;
       outline: none;
+      min-width: 0;
     }
 
     .ai-Side-label {
       white-space: nowrap;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
+      flex-shrink: 0;
     }
 
     .ai-vs-close-btn {
-      padding: 5px 7px;
+      padding: 4px 6px;
       border-radius: 7px;
       border: 1px solid rgba(255, 255, 255, 0.18);
       background: rgba(255, 255, 255, 0.07);
       color: #cbd5e1;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 800;
       cursor: pointer;
       white-space: nowrap;
@@ -1336,9 +1346,10 @@
 
     .system-rank-box {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 6px 10px;
       background: rgba(0, 0, 0, 0.35);
       border: 1px solid rgba(56, 189, 248, 0.25);
       border-radius: 10px;
@@ -1384,17 +1395,20 @@
 
     .system-actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 7px;
+      width: 100%;
     }
 
     .system-btn {
       border: none;
       border-radius: 8px;
-      padding: 10px;
-      font-size: 0.82rem;
+      padding: 10px 8px;
+      font-size: 0.8rem;
       font-weight: 800;
       cursor: pointer;
       white-space: nowrap;
+      text-align: center;
       transition: all 0.15s ease;
     }
 
@@ -1403,17 +1417,28 @@
     }
 
     .system-btn.primary {
-      flex: 1.4;
+      flex: 1 1 0;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: #fff;
       box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
     }
 
     .system-btn.secondary {
-      flex: 0.8;
+      flex: 0 0 74px;
       background: var(--bg-card);
       border: 1px solid var(--border);
       color: #cbd5e1;
+    }
+
+    .system-btn.blunder-btn {
+      flex: 1 1 100%;
+      order: -1;
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      color: #ffd166;
     }
 
     /* 수련/패배 조정 모드 (Amber/Warm Warning 스타일) */
@@ -1549,15 +1574,15 @@
 
       <!-- 연습모드 기본 서브줄 (판편집/AI대결이 닫혀 있을 때 표시) -->
       <div class="practice-sub-row" id="practiceSubRow">
-        <button class="mini-chip cho active" id="practiceSideToggleBtn" onclick="toggleMySide()" title="클릭하여 내 진영(초/한)을 전환합니다">
+        <button class="mini-chip cho active" id="practiceSideToggleBtn" onclick="toggleMySide()" style="flex-shrink:0;" title="클릭하여 내 진영(초/한)을 전환합니다">
           🔵 내가 초 🔄
         </button>
 
-        <button class="mini-chip" id="practiceFormationBtn" onclick="openFormationModal()" style="color:#ffd166; border-color:rgba(245,158,11,0.45); flex:1; justify-content:center;" title="상차림 설정 열기">
-          ♟️ <span id="practiceFormationSummary">나:마상상마 / 상대:마상상마</span> ▾
+        <button class="mini-chip" id="practiceFormationBtn" onclick="openFormationModal()" style="color:#ffd166; border-color:rgba(245,158,11,0.45); flex:1; min-width:0; overflow:hidden; justify-content:center;" title="상차림 설정 열기">
+          ♟️ <span id="practiceFormationSummary" style="overflow:hidden; text-overflow:ellipsis;">마상상마·마상상마</span> ▾
         </button>
 
-        <button class="mini-chip ai-vs-ai" id="btnToggleAiVsAi" onclick="toggleAiVsAiMode(true)" title="초 AI vs 한 AI 자동 대결 설정 열기">
+        <button class="mini-chip ai-vs-ai" id="btnToggleAiVsAi" onclick="toggleAiVsAiMode(true)" style="flex-shrink:0;" title="초 AI vs 한 AI 자동 대결 설정 열기">
           🤖⚔️ AI대결
         </button>
       </div>
@@ -2721,11 +2746,10 @@
     function updateFormationSummaryUI() {
       const myForm = mySide === 'b' ? selectedChoFormation : selectedHanFormation;
       const oppForm = mySide === 'b' ? selectedHanFormation : selectedChoFormation;
-      const text = `나:${myForm} / 상대:${oppForm}`;
-      ['formationSummary', 'practiceFormationSummary'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = text;
-      });
+      const matchEl = document.getElementById('formationSummary');
+      if (matchEl) matchEl.innerText = `나:${myForm} / 상대:${oppForm}`;
+      const pracEl = document.getElementById('practiceFormationSummary');
+      if (pracEl) pracEl.innerText = `${myForm}·${oppForm}`;
     }
 
     function updateAllUI() {
