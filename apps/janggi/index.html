@@ -1797,6 +1797,7 @@
       <div class="move-eval-detail" id="moveEvalDetail"></div>
       <div class="move-eval-actions" id="moveEvalActions" style="display:none;">
         <button class="pv-mini-btn primary" onclick="undoAndRetryFromMoveEval()">↩ 무르고 다시두기</button>
+        <button class="pv-mini-btn gold" id="btnMoveEvalContinue" onclick="continueAiAfterMoveEval()" style="display:none;">▶ 그냥 진행</button>
         <button class="pv-mini-btn" onclick="hideMoveEvalBanner()">닫기</button>
       </div>
     </div>
@@ -4198,8 +4199,6 @@
           const pName = p ? (PIECE_NAMES[p] || p) : '';
           bestKorean = `${teamLabel}${pName} ${toUciSquare(bestCoords.to.col, bestCoords.to.row)}`;
         }
-        aiRecommendMove = { ...bestCoords, color: 'cyan' };
-        renderBoard();
       }
 
       const effectiveMyEval = myEval || { cp: 0, mate: null };
@@ -4221,8 +4220,13 @@
         gradeLabel = '🚨 실수/패착';
       }
 
+      const isBlunder = !isExactBest && loss > 3.0;
+      const shouldPauseOnBlunder = shouldContinueAi && isBlunder && !isEditingBoardNow() && gameState === 'playing' && isCurrentTurnAi();
+
       if (titleEl) {
-        titleEl.innerText = `${gradeLabel} (${myMove.korean})`;
+        titleEl.innerText = shouldPauseOnBlunder
+          ? `🚨 실수/패착! (${myMove.korean}) — 무르시겠어요?`
+          : `${gradeLabel} (${myMove.korean})`;
       }
       if (detailEl) {
         if (isExactBest) {
@@ -4231,12 +4235,32 @@
           detailEl.innerText = `내 수: ${formatEvalPointsLabel(effectiveMyEval)} | 최선의 수(${bestKorean}): ${formatEvalPointsLabel(bestEntry)} (손실 -${loss.toFixed(1)}점)`;
         }
       }
+      const continueBtn = document.getElementById('btnMoveEvalContinue');
+      if (continueBtn) {
+        continueBtn.style.display = shouldPauseOnBlunder ? 'inline-block' : 'none';
+      }
       if (actionsEl) {
         actionsEl.style.display = 'flex';
       }
 
-      if (shouldContinueAi && !isEditingBoardNow() && gameState === 'playing' && isCurrentTurnAi()) {
+      if (shouldPauseOnBlunder) {
+        gameState = 'paused';
+        updateAllUI();
+        showToast('🚨 큰 실수(-3.0점 초과)가 감지되어 잠시 멈췄습니다. 무르거나 그냥 진행할 수 있습니다.');
+      } else if (shouldContinueAi && !isEditingBoardNow() && gameState === 'playing' && isCurrentTurnAi()) {
         scheduleAiMove(350);
+      }
+    }
+
+    function continueAiAfterMoveEval() {
+      if (appMode !== 'practice') return;
+      const continueBtn = document.getElementById('btnMoveEvalContinue');
+      if (continueBtn) continueBtn.style.display = 'none';
+      aiRecommendMove = null;
+      gameState = 'playing';
+      updateAllUI();
+      if (!isEditingBoardNow() && isCurrentTurnAi()) {
+        scheduleAiMove(200);
       }
     }
 
