@@ -153,17 +153,17 @@
 
     .practice-toolbar {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 5px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
     }
 
     .practice-tool-btn {
       background: var(--bg-card);
       border: 1px solid var(--border);
       color: var(--text-main);
-      font-size: 0.73rem;
+      font-size: 0.70rem;
       font-weight: 800;
-      padding: 7px 4px;
+      padding: 7px 2px;
       border-radius: 8px;
       cursor: pointer;
       display: flex;
@@ -663,10 +663,30 @@
     }
 
     /* 4. 반응형 장기판 영역 (스마트폰 화면 폭에 100% 맞춤 & 세로 중앙 배치) */
+    .board-with-coords {
+      width: 100%;
+      margin: auto 0;
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      grid-template-rows: auto 15px;
+      gap: 3px 4px;
+      align-items: stretch;
+    }
+
+    .board-rank-strip {
+      position: relative;
+      width: 18px;
+    }
+
+    .board-file-strip {
+      position: relative;
+      height: 15px;
+    }
+
     .board-container {
       width: 100%;
       aspect-ratio: 9 / 10;
-      margin: auto 0;
+      margin: 0;
       position: relative;
       background: #bb7e38 url('assets/janggi/JanggiWood.svg') no-repeat center / 100% 100%;
       border: 4px solid #5a3818;
@@ -726,6 +746,35 @@
       transform: scale(1.16);
       filter: drop-shadow(0 0 8px #ffd166) drop-shadow(0 4px 8px rgba(0,0,0,0.6));
       z-index: 25;
+    }
+
+    .ai-recommend-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 30;
+    }
+
+    .board-coord-label {
+      position: absolute;
+      font-size: 11px;
+      font-weight: 800;
+      color: #cbd5e1;
+      pointer-events: none;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .board-coord-label.rank {
+      right: 1px;
+      transform: translateY(-50%);
+    }
+
+    .board-coord-label.file {
+      top: 1px;
+      transform: translateX(-50%);
     }
 
     /* 장군 상태 궁 및 공격 기물 강조 */
@@ -1221,6 +1270,64 @@
       color: #ffd166;
     }
 
+    .practice-tool-btn.cyan {
+      background: rgba(34, 211, 238, 0.14);
+      border-color: rgba(34, 211, 238, 0.45);
+      color: #67e8f9;
+    }
+
+    .practice-tool-btn.cyan.active {
+      background: rgba(34, 211, 238, 0.30);
+      border-color: #22d3ee;
+      color: #cffafe;
+      box-shadow: 0 0 10px rgba(34, 211, 238, 0.35);
+    }
+
+    .move-eval-banner {
+      display: none;
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.14), rgba(15, 23, 42, 0.92));
+      border: 1px solid rgba(34, 211, 238, 0.48);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .move-eval-banner.active {
+      display: flex;
+    }
+
+    .move-eval-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #a5f3fc;
+      gap: 8px;
+    }
+
+    .move-eval-close {
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .move-eval-detail {
+      font-size: 0.76rem;
+      color: var(--text-main);
+      line-height: 1.35;
+    }
+
+    .move-eval-actions {
+      display: flex;
+      gap: 6px;
+    }
+
     .blunder-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -1574,7 +1681,8 @@
     <section class="top-panel practice-panel" id="practicePanel">
       <div class="practice-toolbar">
         <button class="practice-tool-btn" id="btnToggleEdit" onclick="toggleBoardEditInPractice()" title="기물 자유 배치 (판편집 열기/닫기)">🧩 판편집</button>
-        <button class="practice-tool-btn gold" id="btnAiRecommend" onclick="triggerPracticeAiRecommendation()" title="현재 국면에서 스톡피쉬 Depth 15 최선수 수순 자동 재현">🤖 AI추천수</button>
+        <button class="practice-tool-btn gold" id="btnAiRecommend" onclick="triggerPracticeAiRecommendation()" title="현재 국면에서 스톡피쉬 Depth 12 추천수를 화살표로 표시">🤖 AI추천</button>
+        <button class="practice-tool-btn cyan" id="btnMoveEval" onclick="triggerPracticeMoveEval()" title="방금 둔 수의 점수와 최선수를 비교 분석(Depth 12)">🔍 수평가</button>
         <button class="practice-tool-btn" id="btnOpenBlunder" onclick="openBlunderModal()" title="대국에서 내가 갑자기 불리해진 패착 지점 찾기">🎯 패착복기</button>
         <button class="practice-tool-btn" id="btnOpenKifu" onclick="toggleKifuModal(true)" title="자동 저장된 대국 및 내 기보함 열기">📁 기보</button>
       </div>
@@ -1671,7 +1779,7 @@
     <!-- 3-B. AI 최선수(Depth 15) 정답 수순 재현 배너 (재현 중일 때만 표시) -->
     <div class="pv-banner" id="pvBanner">
       <div class="pv-banner-top">
-        <span id="pvBannerTitle">🤖 AI 최선수(Depth 15) 계산 중...</span>
+        <span id="pvBannerTitle">🤖 AI 최선수(Depth 12) 계산 중...</span>
       </div>
       <div class="pv-banner-actions">
         <button class="pv-mini-btn primary" onclick="jumpToPvBranchAndPlay()">⚡ 이 지점에서 직접 두기</button>
@@ -1680,9 +1788,27 @@
       </div>
     </div>
 
-    <!-- 4. 장기판 (화면 세로 중앙 자동 배치) -->
-    <div class="board-container">
-      <div class="board-grid" id="boardGrid"></div>
+    <!-- 3-C. 방금 둔 수 평가 배너 (🔍 수평가 결과 표시) -->
+    <div class="move-eval-banner" id="moveEvalBanner">
+      <div class="move-eval-top">
+        <span id="moveEvalTitle">🔍 직전 수 분석 중...</span>
+        <button class="move-eval-close" onclick="hideMoveEvalBanner()" title="닫기">✕</button>
+      </div>
+      <div class="move-eval-detail" id="moveEvalDetail"></div>
+      <div class="move-eval-actions" id="moveEvalActions" style="display:none;">
+        <button class="pv-mini-btn primary" onclick="undoAndRetryFromMoveEval()">↩ 무르고 다시두기</button>
+        <button class="pv-mini-btn" onclick="hideMoveEvalBanner()">닫기</button>
+      </div>
+    </div>
+
+    <!-- 4. 장기판 (화면 세로 중앙 자동 배치 + 바깥 좌표) -->
+    <div class="board-with-coords">
+      <div class="board-rank-strip" id="boardRankStrip"></div>
+      <div class="board-container">
+        <div class="board-grid" id="boardGrid"></div>
+      </div>
+      <div></div>
+      <div class="board-file-strip" id="boardFileStrip"></div>
     </div>
 
     <!-- 5. 하단 컨트롤 바 (안 A: 상태줄 + 수순 탐색(연습전용) + 대국 제어) -->
@@ -1800,7 +1926,7 @@
 
       <!-- 현재 보고 있는 장면에서 바로 Depth 15 최선수 재현하기 버튼 -->
       <button class="blunder-action-btn ai-best" id="btnCurrentPlyAiBest" style="padding:10px;" onclick="startAiBestReplayAtPly(currentPly)">
-        🤖 현재 보고 있는 국면에서 AI 최선수(Depth 15) 자동 재현
+        🤖 현재 보고 있는 국면에서 AI 최선수(Depth 12) 자동 재현
       </button>
 
       <!-- 감지된 패착 리스트 -->
@@ -1964,8 +2090,11 @@
     let currentSearchId = 0;
     let lastEvalData = null;
 
-    // 패착 복기 & AI 최선수(Depth 15) 수순 자동 재현 상태
-    let searchMode = 'game';           // 'game' | 'pv_solution'
+    // 패착 복기 & AI 최선수(Depth 15) 수순 자동 재현 / 추천수 화살표 / 수평가 상태
+    let searchMode = 'game';           // 'game' | 'pv_solution' | 'recommend' | 'move_eval_multi' | 'move_eval_my'
+    let aiRecommendMove = null;        // { from: {col, row}, to: {col, row}, isPass: boolean, color?: 'gold'|'cyan' } | null
+    let moveEvalState = null;          // 방금 둔 수 평가(MultiPV 3 + searchmoves) 상태 객체
+    let isAutoMoveEval = false;        // 연습모드에서 내 착수마다 자동 수평가 ON/OFF
     let latestPvMoves = [];            // Depth 15 탐색 중 수집된 PV(최선 예상 수순)
     let pvReplayTimer = null;          // 수순 자동 재현 타이머
     let savedOriginalHistory = null;   // 복기/정답재현 전 원본 대국 수순 백업
@@ -2459,6 +2588,8 @@
     function resetToFormationBoard(showMsg = false) {
       stopAiThinking();
       hidePvBanner();
+      hideMoveEvalBanner();
+      aiRecommendMove = null;
       savedOriginalHistory = null;
       hasAutoSavedCurrentMatch = false;
       board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -2737,6 +2868,126 @@
           grid.appendChild(cell);
         }
       }
+
+      renderBoardCoordinates();
+
+      if (aiRecommendMove) {
+        renderAiRecommendArrow(grid, aiRecommendMove);
+      }
+    }
+
+    function renderBoardCoordinates() {
+      const rankStrip = document.getElementById('boardRankStrip');
+      const fileStrip = document.getElementById('boardFileStrip');
+
+      if (rankStrip) {
+        rankStrip.innerHTML = '';
+        for (let sr = 0; sr < ROWS; sr++) {
+          const r = isFlipped ? (ROWS - 1 - sr) : sr;
+          const lbl = document.createElement('span');
+          lbl.className = 'board-coord-label rank';
+          lbl.style.top = `${((50 + sr * 100) / 1000) * 100}%`;
+          lbl.innerText = String(10 - r);
+          rankStrip.appendChild(lbl);
+        }
+      }
+
+      if (fileStrip) {
+        fileStrip.innerHTML = '';
+        for (let sc = 0; sc < COLS; sc++) {
+          const c = isFlipped ? (COLS - 1 - sc) : sc;
+          const lbl = document.createElement('span');
+          lbl.className = 'board-coord-label file';
+          lbl.style.left = `${((50 + sc * 100) / 900) * 100}%`;
+          lbl.innerText = FILES[c];
+          fileStrip.appendChild(lbl);
+        }
+      }
+    }
+
+    function renderAiRecommendArrow(grid, move) {
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('class', 'ai-recommend-overlay');
+      svg.setAttribute('viewBox', '0 0 900 1000');
+
+      const fromSc = isFlipped ? (COLS - 1 - move.from.col) : move.from.col;
+      const fromSr = isFlipped ? (ROWS - 1 - move.from.row) : move.from.row;
+      const x1 = 50 + fromSc * 100;
+      const y1 = 50 + fromSr * 100;
+
+      const isCyan = move.color === 'cyan';
+      const strokeSolid = isCyan ? '#22d3ee' : '#fbbf24';
+      const strokeRgba = isCyan ? 'rgba(34, 211, 238, 0.92)' : 'rgba(251, 191, 36, 0.92)';
+      const dotRgba = isCyan ? 'rgba(34, 211, 238, 0.85)' : 'rgba(251, 191, 36, 0.85)';
+      const ringFill = isCyan ? 'rgba(34, 211, 238, 0.22)' : 'rgba(245, 158, 11, 0.22)';
+
+      if (move.isPass) {
+        const ring = document.createElementNS(svgNS, 'circle');
+        ring.setAttribute('cx', x1);
+        ring.setAttribute('cy', y1);
+        ring.setAttribute('r', '44');
+        ring.setAttribute('fill', ringFill);
+        ring.setAttribute('stroke', strokeSolid);
+        ring.setAttribute('stroke-width', '8');
+        ring.setAttribute('stroke-dasharray', '12 8');
+        svg.appendChild(ring);
+        grid.appendChild(svg);
+        return;
+      }
+
+      const toSc = isFlipped ? (COLS - 1 - move.to.col) : move.to.col;
+      const toSr = isFlipped ? (ROWS - 1 - move.to.row) : move.to.row;
+      const x2 = 50 + toSc * 100;
+      const y2 = 50 + toSr * 100;
+
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) return;
+
+      const defs = document.createElementNS(svgNS, 'defs');
+      const marker = document.createElementNS(svgNS, 'marker');
+      marker.setAttribute('id', 'aiRecommendArrowHead');
+      marker.setAttribute('markerWidth', '4.2');
+      marker.setAttribute('markerHeight', '4.2');
+      marker.setAttribute('refX', '2.6');
+      marker.setAttribute('refY', '2.1');
+      marker.setAttribute('orient', 'auto');
+      const poly = document.createElementNS(svgNS, 'polygon');
+      poly.setAttribute('points', '0 0, 4.2 2.1, 0 4.2');
+      poly.setAttribute('fill', strokeRgba);
+      marker.appendChild(poly);
+      defs.appendChild(marker);
+      svg.appendChild(defs);
+
+      const ux = dx / len;
+      const uy = dy / len;
+      const sx = x1 + ux * 16;
+      const sy = y1 + uy * 16;
+      const ex = x2 - ux * 20;
+      const ey = y2 - uy * 20;
+
+      const startDot = document.createElementNS(svgNS, 'circle');
+      startDot.setAttribute('cx', x1);
+      startDot.setAttribute('cy', y1);
+      startDot.setAttribute('r', '13');
+      startDot.setAttribute('fill', dotRgba);
+      svg.appendChild(startDot);
+
+      const line = document.createElementNS(svgNS, 'line');
+      line.setAttribute('x1', sx);
+      line.setAttribute('y1', sy);
+      line.setAttribute('x2', ex);
+      line.setAttribute('y2', ey);
+      line.setAttribute('stroke', strokeRgba);
+      line.setAttribute('stroke-width', '14');
+      line.setAttribute('stroke-linecap', 'round');
+      line.setAttribute('marker-end', 'url(#aiRecommendArrowHead)');
+      line.setAttribute('style', 'filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55));');
+      svg.appendChild(line);
+
+      grid.appendChild(svg);
     }
 
     function updateSideToggleUI() {
@@ -2940,6 +3191,10 @@
       const moverWasInCheck = findKingCheckInfo(board, moverTeam).inCheck;
 
       // 실제 기물 이동 반영
+      aiRecommendMove = null;
+      if (currentTurn === mySide) {
+        hideMoveEvalBanner();
+      }
       board[to.row][to.col] = movingPiece;
       board[from.row][from.col] = null;
       playWoodSnap();
@@ -3021,9 +3276,13 @@
       updateAllUI();
       saveAutoState();
 
-      // 대국 진행 중이고 다음 차례가 AI이면 스톡피쉬 호출
+      // 대국 진행 중이고 다음 차례가 AI이면 스톡피쉬 호출 (자동 수평가 ON이면 내 수 분석 후 AI 응수)
       if (!isEditingBoardNow() && gameState === 'playing' && isCurrentTurnAi()) {
-        scheduleAiMove(450);
+        if (appMode === 'practice' && isAutoMoveEval && !isAiVsAiActive() && wasmReady) {
+          startMoveEvalForPly(currentPly, true);
+        } else {
+          scheduleAiMove(450);
+        }
       }
       return true;
     }
@@ -3063,6 +3322,10 @@
     }
 
     function passTurn(evalMeta = null) {
+      aiRecommendMove = null;
+      if (currentTurn === mySide) {
+        hideMoveEvalBanner();
+      }
       if (moveHistory.length === 0 && currentPly === 0) {
         initialFen = getBoardFen();
       }
@@ -3108,7 +3371,11 @@
       }
 
       if (!isEditingBoardNow() && gameState === 'playing' && isCurrentTurnAi()) {
-        scheduleAiMove(450);
+        if (appMode === 'practice' && isAutoMoveEval && !isAiVsAiActive() && wasmReady) {
+          startMoveEvalForPly(currentPly, true);
+        } else {
+          scheduleAiMove(450);
+        }
       }
     }
 
@@ -3216,6 +3483,8 @@
 
     // initialFen부터 targetPly까지 수순을 재생하여 보드 상태를 정확히 복원
     function reconstructBoardAtPly(targetPly) {
+      aiRecommendMove = null;
+      hideMoveEvalBanner();
       const parsed = parseFenToBoardState(initialFen);
       board = parsed.board;
       currentTurn = parsed.turn;
@@ -3434,6 +3703,8 @@
 
       stopAiThinking();
       hidePvBanner();
+      hideMoveEvalBanner();
+      aiRecommendMove = null;
       const prevMode = appMode;
       appMode = targetMode;
 
@@ -3454,6 +3725,8 @@
         // 연습모드 -> 대국모드 복귀 시: 편집된 판이나 연습 국면이 랭크전에 영향을 주지 않도록 깨끗한 정식 상차림으로 초기화
         isBoardEditing = false;
         isAiVsAi = false;
+        isAutoMoveEval = false;
+        updateMoveEvalToggleUI();
         selectedCell = null;
         resetToFormationBoard(false);
         showToast('⚔️ 실전 대국모드로 전환되었습니다. 진영과 상차림을 확인 후 대국을 시작하세요!');
@@ -3546,6 +3819,8 @@
       if (appMode !== 'practice') return;
       stopAiThinking();
       hidePvBanner();
+      hideMoveEvalBanner();
+      aiRecommendMove = null;
 
       const nextState = typeof forceState === 'boolean' ? forceState : !isBoardEditing;
       const prevState = isBoardEditing;
@@ -3567,9 +3842,14 @@
       saveAutoState();
     }
 
-    // 연습모드 내 [🤖 AI추천수] 버튼 실행 (현재 국면에서 Depth 15 최선 수순 자동 재현)
+    // 연습모드 내 [🤖 AI추천수] 버튼 실행 (Depth 12, Skill 20으로 bestmove를 구해 화살표로만 표시)
     function triggerPracticeAiRecommendation() {
       if (appMode !== 'practice') return;
+      if (!wasmReady) {
+        showToast('⏳ 스톡피쉬 엔진 로딩 중입니다. 잠시 후 다시 시도해 주세요.');
+        return;
+      }
+
       if (isBoardEditing) {
         isBoardEditing = false;
         initialFen = getBoardFen();
@@ -3578,7 +3858,414 @@
         lastMove = null;
         gameState = 'idle';
       }
-      startAiBestReplayAtPly(currentPly);
+
+      stopAiThinking();
+      hidePvBanner();
+      hideMoveEvalBanner();
+      aiRecommendMove = null;
+      updateAllUI();
+
+      searchMode = 'recommend';
+      isAiThinking = true;
+      const searchId = ++currentSearchId;
+      window._activeSearchId = searchId;
+
+      const dot = document.getElementById('engineDot');
+      if (dot) dot.classList.add('thinking');
+      const btn = document.getElementById('btnAiRecommend');
+      if (btn) btn.innerText = '⏳ 계산중...';
+      updateScoreAndStatusUI();
+
+      const activeMoves = moveHistory.slice(0, currentPly).map(m => m.uci);
+      const posCmd = activeMoves.length > 0
+        ? `position fen ${initialFen} moves ${activeMoves.join(' ')}`
+        : `position fen ${initialFen}`;
+
+      sendWasmCmd('stop');
+      sendWasmCmd('setoption name Skill Level value 20');
+      sendWasmCmd(posCmd);
+      sendWasmCmd('go depth 12');
+    }
+
+    function onAiRecommendBestMove(bestmove) {
+      const searchId = window._activeSearchId;
+      if (!isAiThinking || searchId !== currentSearchId) return;
+
+      isAiThinking = false;
+      searchMode = 'game';
+      const dot = document.getElementById('engineDot');
+      if (dot) dot.classList.remove('thinking');
+      const btn = document.getElementById('btnAiRecommend');
+      if (btn) btn.innerText = '🤖 AI추천';
+
+      if (!bestmove || bestmove === '(none)' || bestmove === 'none') {
+        aiRecommendMove = null;
+        updateScoreAndStatusUI();
+        renderBoard();
+        showToast('⚠️ 이 국면에서 추천할 수가 없습니다.');
+        return;
+      }
+
+      const uci = bestmove.trim().toLowerCase();
+      if (uci === '0000') {
+        const targetKing = currentTurn === 'b' ? 'k' : 'K';
+        let kingPos = { col: 4, row: currentTurn === 'b' ? 1 : 8 };
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            if (board[r][c] === targetKing) {
+              kingPos = { col: c, row: r };
+            }
+          }
+        }
+        aiRecommendMove = { from: { ...kingPos }, to: { ...kingPos }, isPass: true };
+        updateScoreAndStatusUI();
+        renderBoard();
+        showToast('🤖 AI 추천수(Depth 12): 한수쉼');
+        return;
+      }
+
+      const match = uci.match(/^([a-i](?:10|[1-9]))([a-i](?:10|[1-9]))$/);
+      if (!match) {
+        aiRecommendMove = null;
+        updateScoreAndStatusUI();
+        renderBoard();
+        showToast('⚠️ 추천수 좌표를 해석할 수 없습니다.');
+        return;
+      }
+
+      const from = fromUciSquare(match[1]);
+      const to = fromUciSquare(match[2]);
+      const isPass = from.col === to.col && from.row === to.row;
+      aiRecommendMove = { from, to, isPass };
+
+      updateScoreAndStatusUI();
+      renderBoard();
+
+      const movingPiece = board[from.row]?.[from.col];
+      const teamLabel = currentTurn === 'b' ? '초' : '한';
+      const pieceName = movingPiece ? (PIECE_NAMES[movingPiece] || movingPiece) : '';
+      const moveLabel = isPass
+        ? `${teamLabel} 한수쉼`
+        : `${teamLabel}${pieceName} ${toUciSquare(to.col, to.row)}`;
+      showToast(`🤖 AI 추천수(Depth 12): ${moveLabel}`);
+    }
+
+    // 연습모드 내 [🔍 수평가] 배너 닫기
+    function hideMoveEvalBanner() {
+      const banner = document.getElementById('moveEvalBanner');
+      if (banner) banner.classList.remove('active');
+    }
+
+    function buildPreBoardForEval(movesBefore) {
+      const parsed = parseFenToBoardState(initialFen);
+      const tempBoard = parsed.board.map(row => [...row]);
+      for (let i = 0; i < movesBefore.length; i++) {
+        const uci = (movesBefore[i] || '').trim().toLowerCase();
+        if (uci === '0000') continue;
+        const m = uci.match(/^([a-i](?:10|[1-9]))([a-i](?:10|[1-9]))$/);
+        if (!m) continue;
+        const f = fromUciSquare(m[1]);
+        const t = fromUciSquare(m[2]);
+        if (f.col !== t.col || f.row !== t.row) {
+          tempBoard[t.row][t.col] = tempBoard[f.row][f.col];
+          tempBoard[f.row][f.col] = null;
+        }
+      }
+      return tempBoard;
+    }
+
+    function isSameMoveUci(uciA, uciB) {
+      const a = (uciA || '').trim().toLowerCase();
+      const b = (uciB || '').trim().toLowerCase();
+      if (a === b) return true;
+      const isPassA = a === '0000' || (a.length >= 4 && a.slice(0, a.length / 2) === a.slice(a.length / 2));
+      const isPassB = b === '0000' || (b.length >= 4 && b.slice(0, b.length / 2) === b.slice(b.length / 2));
+      return isPassA && isPassB;
+    }
+
+    function evalScoreToPoints(ev) {
+      if (!ev) return 0;
+      if (ev.mate !== null && ev.mate !== undefined) {
+        return ((3000 - Math.abs(ev.mate) * 50) * (ev.mate > 0 ? 1 : -1)) / 100;
+      }
+      return (ev.cp || 0) / 100;
+    }
+
+    function formatEvalPointsLabel(ev) {
+      if (!ev) return '0.0점';
+      if (ev.mate !== null && ev.mate !== undefined) {
+        return ev.mate > 0 ? `${ev.mate}수 내 외통승` : `${Math.abs(ev.mate)}수 내 피외통`;
+      }
+      const pts = (ev.cp || 0) / 100;
+      const sign = pts > 0 ? '+' : '';
+      return `${sign}${pts.toFixed(1)}점`;
+    }
+
+    function parseUciToBoardCoords(uci, preBoard, team) {
+      const clean = (uci || '').trim().toLowerCase();
+      if (clean === '0000') {
+        const targetKing = team === 'b' ? 'k' : 'K';
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            if (preBoard[r][c] === targetKing) {
+              return { from: { col: c, row: r }, to: { col: c, row: r }, isPass: true };
+            }
+          }
+        }
+        const defPos = { col: 4, row: team === 'b' ? 1 : 8 };
+        return { from: defPos, to: { ...defPos }, isPass: true };
+      }
+      const m = clean.match(/^([a-i](?:10|[1-9]))([a-i](?:10|[1-9]))$/);
+      if (!m) return null;
+      const from = fromUciSquare(m[1]);
+      const to = fromUciSquare(m[2]);
+      return { from, to, isPass: from.col === to.col && from.row === to.row };
+    }
+
+    function updateMoveEvalToggleUI() {
+      const btn = document.getElementById('btnMoveEval');
+      if (!btn) return;
+      btn.classList.toggle('active', isAutoMoveEval);
+      btn.innerText = isAutoMoveEval ? '🔍 수평가 ON' : '🔍 수평가';
+    }
+
+    // 연습모드 내 [🔍 수평가] 버튼 토글 (ON 시 내가 한 수 둘 때마다 직전 국면 기준 평가 후 AI 응수)
+    function triggerPracticeMoveEval() {
+      if (appMode !== 'practice') return;
+      isAutoMoveEval = !isAutoMoveEval;
+      updateMoveEvalToggleUI();
+
+      if (isAutoMoveEval) {
+        showToast('🔍 자동 수평가 ON! 이제 한 수를 둘 때마다 점수와 최선수를 알려드립니다.');
+      } else {
+        hideMoveEvalBanner();
+        showToast('🔍 자동 수평가 OFF');
+      }
+    }
+
+    function startMoveEvalForPly(targetPly, continueAiAfter = false) {
+      if (appMode !== 'practice') return;
+      if (isBoardEditing || !wasmReady) return;
+      if (targetPly <= 0 || !moveHistory[targetPly - 1]) return;
+
+      stopAiThinking();
+      hidePvBanner();
+      aiRecommendMove = null;
+      renderBoard();
+
+      const targetMove = moveHistory[targetPly - 1];
+      const movesBefore = moveHistory.slice(0, targetPly - 1).map(m => m.uci);
+      const preBoard = buildPreBoardForEval(movesBefore);
+
+      moveEvalState = {
+        targetPly,
+        targetMove,
+        movesBefore,
+        preBoard,
+        multiPvMap: {},
+        myMoveEval: null,
+        bestUci: null,
+        continueAiAfter
+      };
+
+      const banner = document.getElementById('moveEvalBanner');
+      const titleEl = document.getElementById('moveEvalTitle');
+      const detailEl = document.getElementById('moveEvalDetail');
+      const actionsEl = document.getElementById('moveEvalActions');
+      if (banner) banner.classList.add('active');
+      if (titleEl) titleEl.innerText = `🔍 직전 수(${targetMove.korean}) 분석 중...`;
+      if (detailEl) detailEl.innerText = '직전 국면에서 최선 3수(MultiPV 3, Depth 12)를 스캔하고 있습니다...';
+      if (actionsEl) actionsEl.style.display = 'none';
+
+      searchMode = 'move_eval_multi';
+      isAiThinking = true;
+      const searchId = ++currentSearchId;
+      window._activeSearchId = searchId;
+
+      const dot = document.getElementById('engineDot');
+      if (dot) dot.classList.add('thinking');
+      const btn = document.getElementById('btnMoveEval');
+      if (btn) btn.innerText = '⏳ D0/12';
+
+      const posCmd = movesBefore.length > 0
+        ? `position fen ${initialFen} moves ${movesBefore.join(' ')}`
+        : `position fen ${initialFen}`;
+
+      sendWasmCmd('stop');
+      sendWasmCmd('setoption name Skill Level value 20');
+      sendWasmCmd('setoption name MultiPV value 3');
+      sendWasmCmd(posCmd);
+      sendWasmCmd('go depth 12');
+    }
+
+    function onMoveEvalMultiReady(bestmove) {
+      const searchId = window._activeSearchId;
+      if (!isAiThinking || searchId !== currentSearchId || !moveEvalState) return;
+
+      sendWasmCmd('setoption name MultiPV value 1');
+
+      const bestEntry = moveEvalState.multiPvMap[1] || (
+        bestmove && bestmove !== '(none)' && bestmove !== 'none'
+          ? { uci: bestmove.trim().toLowerCase(), cp: 0, mate: null }
+          : null
+      );
+
+      if (!bestEntry) {
+        finishMoveEval(null, null);
+        return;
+      }
+
+      const myUci = (moveEvalState.targetMove.uci || '').trim().toLowerCase();
+      let foundEntry = null;
+      for (const pvNum of [1, 2, 3]) {
+        const entry = moveEvalState.multiPvMap[pvNum];
+        if (entry && isSameMoveUci(entry.uci, myUci)) {
+          foundEntry = entry;
+          break;
+        }
+      }
+
+      if (foundEntry) {
+        moveEvalState.myMoveEval = { cp: foundEntry.cp, mate: foundEntry.mate };
+        finishMoveEval(bestEntry, moveEvalState.myMoveEval);
+        return;
+      }
+
+      // 상위 3수 밖에 있는 경우: searchmoves로 내 수만 1회 정밀 측정
+      searchMode = 'move_eval_my';
+      const newSearchId = ++currentSearchId;
+      window._activeSearchId = newSearchId;
+
+      const titleEl = document.getElementById('moveEvalTitle');
+      const detailEl = document.getElementById('moveEvalDetail');
+      if (titleEl) titleEl.innerText = `🔍 내 수(${moveEvalState.targetMove.korean}) 정밀 측정 중...`;
+      if (detailEl) detailEl.innerText = '상위 3수 밖의 수여서 searchmoves로 정확한 점수를 계산하고 있습니다...';
+
+      const posCmd = moveEvalState.movesBefore.length > 0
+        ? `position fen ${initialFen} moves ${moveEvalState.movesBefore.join(' ')}`
+        : `position fen ${initialFen}`;
+
+      sendWasmCmd('stop');
+      sendWasmCmd('setoption name MultiPV value 1');
+      sendWasmCmd('setoption name Skill Level value 20');
+      sendWasmCmd(posCmd);
+      sendWasmCmd(`go depth 12 searchmoves ${myUci}`);
+    }
+
+    function onMoveEvalMyReady() {
+      const searchId = window._activeSearchId;
+      if (!isAiThinking || searchId !== currentSearchId || !moveEvalState) return;
+      const bestEntry = moveEvalState.multiPvMap[1] || null;
+      finishMoveEval(bestEntry, moveEvalState.myMoveEval);
+    }
+
+    function finishMoveEval(bestEntry, myEval) {
+      isAiThinking = false;
+      searchMode = 'game';
+      const dot = document.getElementById('engineDot');
+      if (dot) dot.classList.remove('thinking');
+      updateMoveEvalToggleUI();
+
+      const shouldContinueAi = Boolean(moveEvalState && moveEvalState.continueAiAfter);
+
+      const titleEl = document.getElementById('moveEvalTitle');
+      const detailEl = document.getElementById('moveEvalDetail');
+      const actionsEl = document.getElementById('moveEvalActions');
+
+      if (!moveEvalState || !bestEntry) {
+        if (titleEl) titleEl.innerText = '⚠️ 이 수에 대한 평가 정보를 구하지 못했습니다.';
+        if (detailEl) detailEl.innerText = '';
+        if (actionsEl) actionsEl.style.display = 'none';
+        if (shouldContinueAi && !isEditingBoardNow() && gameState === 'playing' && isCurrentTurnAi()) {
+          scheduleAiMove(300);
+        }
+        return;
+      }
+
+      const myMove = moveEvalState.targetMove;
+      const myUci = (myMove.uci || '').trim().toLowerCase();
+      const bestUci = (bestEntry.uci || '').trim().toLowerCase();
+      moveEvalState.bestUci = bestUci;
+
+      const bestCoords = parseUciToBoardCoords(bestUci, moveEvalState.preBoard, myMove.team);
+      const teamLabel = myMove.team === 'b' ? '초' : '한';
+      let bestKorean = bestUci;
+      if (bestCoords) {
+        if (bestCoords.isPass) {
+          bestKorean = `${teamLabel} 한수쉼`;
+        } else {
+          const p = moveEvalState.preBoard[bestCoords.from.row]?.[bestCoords.from.col];
+          const pName = p ? (PIECE_NAMES[p] || p) : '';
+          bestKorean = `${teamLabel}${pName} ${toUciSquare(bestCoords.to.col, bestCoords.to.row)}`;
+        }
+        aiRecommendMove = { ...bestCoords, color: 'cyan' };
+        renderBoard();
+      }
+
+      const effectiveMyEval = myEval || { cp: 0, mate: null };
+      const bestPts = evalScoreToPoints(bestEntry);
+      const myPts = evalScoreToPoints(effectiveMyEval);
+      const loss = Math.max(0, bestPts - myPts);
+      const isExactBest = isSameMoveUci(myUci, bestUci);
+
+      let gradeLabel = '';
+      if (isExactBest || (loss < 0.05 && bestEntry.mate === effectiveMyEval.mate)) {
+        gradeLabel = '🌟 최선수!';
+      } else if (loss <= 0.5) {
+        gradeLabel = '👍 좋은 수';
+      } else if (loss <= 1.5) {
+        gradeLabel = '👌 무난한 수';
+      } else if (loss <= 3.0) {
+        gradeLabel = '🤔 아쉬운 수';
+      } else {
+        gradeLabel = '🚨 실수/패착';
+      }
+
+      if (titleEl) {
+        titleEl.innerText = `${gradeLabel} (${myMove.korean})`;
+      }
+      if (detailEl) {
+        if (isExactBest) {
+          detailEl.innerText = `완벽합니다! AI 최선수와 일치합니다. (내 수 평가: ${formatEvalPointsLabel(effectiveMyEval)})`;
+        } else {
+          detailEl.innerText = `내 수: ${formatEvalPointsLabel(effectiveMyEval)} | 최선의 수(${bestKorean}): ${formatEvalPointsLabel(bestEntry)} (손실 -${loss.toFixed(1)}점)`;
+        }
+      }
+      if (actionsEl) {
+        actionsEl.style.display = 'flex';
+      }
+
+      if (shouldContinueAi && !isEditingBoardNow() && gameState === 'playing' && isCurrentTurnAi()) {
+        scheduleAiMove(350);
+      }
+    }
+
+    function undoAndRetryFromMoveEval() {
+      if (!moveEvalState || appMode !== 'practice') {
+        hideMoveEvalBanner();
+        return;
+      }
+      const targetBranchPly = Math.max(0, moveEvalState.targetPly - 1);
+      const savedTeam = moveEvalState.targetMove.team;
+      const savedBestUci = moveEvalState.bestUci;
+      const savedPreBoard = moveEvalState.preBoard;
+
+      stopAiThinking();
+      hideMoveEvalBanner();
+      moveHistory = moveHistory.slice(0, targetBranchPly);
+      reconstructBoardAtPly(targetBranchPly);
+
+      if (savedBestUci && savedPreBoard) {
+        const bestCoords = parseUciToBoardCoords(savedBestUci, savedPreBoard, savedTeam);
+        if (bestCoords) {
+          aiRecommendMove = { ...bestCoords, color: 'cyan' };
+        }
+      }
+
+      gameState = 'playing';
+      updateAllUI();
+      saveAutoState();
+      showToast('↩ 한 수 물렀습니다. 최선 화살표를 참고해 다시 두어보세요!');
     }
 
     function selectPaletteItem(piece, el) {
@@ -4363,6 +5050,12 @@
         const bestmove = parts[1];
         if (searchMode === 'pv_solution') {
           onPvSolutionReady(bestmove);
+        } else if (searchMode === 'recommend') {
+          onAiRecommendBestMove(bestmove);
+        } else if (searchMode === 'move_eval_multi') {
+          onMoveEvalMultiReady(bestmove);
+        } else if (searchMode === 'move_eval_my') {
+          onMoveEvalMyReady(bestmove);
         } else {
           onStockfishBestMove(bestmove);
         }
@@ -4371,11 +5064,15 @@
 
     function parseWasmInfo(line) {
       let depthNum = null;
+      let multipvNum = 1;
       let scoreCp = null;
       let mateIn = null;
 
       const dMatch = line.match(/\bdepth\s+(\d+)/);
       if (dMatch) depthNum = parseInt(dMatch[1], 10);
+
+      const mpvMatch = line.match(/\bmultipv\s+(\d+)/);
+      if (mpvMatch) multipvNum = parseInt(mpvMatch[1], 10);
 
       const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
       if (cpMatch) scoreCp = parseInt(cpMatch[1], 10);
@@ -4384,20 +5081,48 @@
       if (mateMatch) mateIn = parseInt(mateMatch[1], 10);
 
       // PV (Principal Variation: AI 최선 예상 수순) 파싱
+      let parsedPvMoves = [];
       const pvIdx = line.indexOf(' pv ');
       if (pvIdx !== -1) {
         const tokens = line.slice(pvIdx + 4).trim().split(/\s+/);
-        const validMoves = tokens.filter(t => /^(?:[a-i](?:10|[1-9])[a-i](?:10|[1-9])|0000)$/i.test(t));
-        if (validMoves.length > 0) {
-          latestPvMoves = validMoves;
+        parsedPvMoves = tokens.filter(t => /^(?:[a-i](?:10|[1-9])[a-i](?:10|[1-9])|0000)$/i.test(t));
+        if (parsedPvMoves.length > 0 && multipvNum === 1) {
+          latestPvMoves = parsedPvMoves;
         }
       }
 
       if (searchMode === 'pv_solution' && depthNum !== null) {
         const titleEl = document.getElementById('pvBannerTitle');
         if (titleEl) {
-          titleEl.innerText = `🧠 AI 최선수(Depth 15) 수읽기 중... (현재 Depth ${depthNum}/15)`;
+          titleEl.innerText = `🧠 AI 최선수(Depth 12) 수읽기 중... (현재 Depth ${depthNum}/12)`;
         }
+      } else if (searchMode === 'recommend' && depthNum !== null) {
+        const btn = document.getElementById('btnAiRecommend');
+        if (btn) {
+          btn.innerText = `⏳ D${depthNum}/12`;
+        }
+      } else if (searchMode === 'move_eval_multi') {
+        if (depthNum !== null) {
+          const btn = document.getElementById('btnMoveEval');
+          if (btn) btn.innerText = `⏳ D${depthNum}/12`;
+        }
+        if (moveEvalState && parsedPvMoves.length > 0 && (scoreCp !== null || mateIn !== null)) {
+          moveEvalState.multiPvMap[multipvNum] = {
+            uci: parsedPvMoves[0].toLowerCase(),
+            cp: scoreCp,
+            mate: mateIn
+          };
+        }
+        return;
+      } else if (searchMode === 'move_eval_my') {
+        if (depthNum !== null) {
+          const btn = document.getElementById('btnMoveEval');
+          if (btn) btn.innerText = `⏳ D${depthNum}/12`;
+        }
+        if (moveEvalState && (scoreCp !== null || mateIn !== null)) {
+          moveEvalState.myMoveEval = { cp: scoreCp, mate: mateIn };
+        }
+        return;
       }
 
       if (scoreCp !== null || mateIn !== null) {
@@ -4466,14 +5191,21 @@
         clearTimeout(pvReplayTimer);
         pvReplayTimer = null;
       }
+      const prevSearchMode = searchMode;
       currentSearchId++;
       if (isAiThinking) {
         sendWasmCmd('stop');
         isAiThinking = false;
       }
+      if (prevSearchMode === 'move_eval_multi') {
+        sendWasmCmd('setoption name MultiPV value 1');
+      }
       searchMode = 'game';
       const dot = document.getElementById('engineDot');
       if (dot) dot.classList.remove('thinking');
+      const recommendBtn = document.getElementById('btnAiRecommend');
+      if (recommendBtn) recommendBtn.innerText = '🤖 AI추천';
+      updateMoveEvalToggleUI();
     }
 
     function requestStockfishMove() {
@@ -4589,7 +5321,7 @@
     function openBlunderModal() {
       const btnCurr = document.getElementById('btnCurrentPlyAiBest');
       if (btnCurr) {
-        btnCurr.innerText = `🤖 지금 보고 있는 국면(${currentPly}수)에서 AI 최선수(Depth 15) 자동 재현`;
+        btnCurr.innerText = `🤖 지금 보고 있는 국면(${currentPly}수)에서 AI 최선수(Depth 12) 자동 재현`;
       }
       renderBlunderList();
       document.getElementById('blunderModal').classList.add('open');
@@ -4732,7 +5464,7 @@
       const banner = document.getElementById('pvBanner');
       const titleEl = document.getElementById('pvBannerTitle');
       if (banner) banner.classList.add('active');
-      if (titleEl) titleEl.innerText = `🧠 ${branchPly + 1}수 시점 AI 최선수(Depth 15) 계산 중...`;
+      if (titleEl) titleEl.innerText = `🧠 ${branchPly + 1}수 시점 AI 최선수(Depth 12) 계산 중...`;
 
       searchMode = 'pv_solution';
       latestPvMoves = [];
@@ -4752,7 +5484,7 @@
       sendWasmCmd('stop');
       sendWasmCmd('setoption name Skill Level value 20');
       sendWasmCmd(posCmd);
-      sendWasmCmd('go depth 15');
+      sendWasmCmd('go depth 12');
     }
 
     function onPvSolutionReady(bestmove) {
@@ -4800,7 +5532,7 @@
       function stepNextPvMove() {
         if (idx >= pvSeq.length) {
           if (titleEl) {
-            titleEl.innerText = `✅ AI 최선수(Depth 15) ${pvSeq.length}수 재현 완료! (뒤로/앞으로 확인 가능)`;
+            titleEl.innerText = `✅ AI 최선수(Depth 12) ${pvSeq.length}수 재현 완료! (뒤로/앞으로 확인 가능)`;
           }
           updateAllUI();
           return;
@@ -4887,7 +5619,7 @@
         idx++;
 
         if (titleEl) {
-          titleEl.innerText = `✨ AI 최선수(Depth 15) 재현 중: ${idx}/${pvSeq.length}수 (${korean})`;
+          titleEl.innerText = `✨ AI 최선수(Depth 12) 재현 중: ${idx}/${pvSeq.length}수 (${korean})`;
         }
         updateAllUI();
 
