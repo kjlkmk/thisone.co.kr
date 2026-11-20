@@ -1,8 +1,8 @@
 {
   "id": "/apps/janggi/",
-  "name": "나혼자 레벨업 장기",
+  "name": "레벨업 장기",
   "short_name": "레벨업장기",
-  "description": "스마트폰에 최적화된 나혼자 레벨업 장기. 스톡피쉬 AI 실전 대국(E급 헌터~그림자 군주), 연습모드, 판편집, AI 대결, 패착 복기 및 기보 연구를 지원합니다.",
+  "description": "스마트폰에 최적화된 레벨업 장기. 스톡피쉬 AI 실전 대국(입문 18급~명인·국수 기력 시스템), 연습모드, 판편집, AI 대결, 패착 복기 및 기보 연구를 지원합니다.",
   "start_url": "/apps/janggi/index.html",
   "scope": "/apps/janggi/",
   "display": "standalone",

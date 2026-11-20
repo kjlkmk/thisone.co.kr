@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>나혼자 레벨업 장기 - AI 스톡피쉬 대국 & 기보 연구</title>
-  <meta name="description" content="스마트폰에 최적화된 나혼자 레벨업 장기. 브라우저 내장 Fairy-Stockfish AI 대국(헌터 등급 E급~그림자 군주, Depth 1~10 · Skill 0~20 적응형 난이도), 상차림 설정, 판편집, 기보 저장 및 복기를 지원합니다." />
+  <title>레벨업 장기 - AI 스톡피쉬 대국 & 기보 연구</title>
+  <meta name="description" content="스마트폰에 최적화된 레벨업 장기. 브라우저 내장 Fairy-Stockfish AI 대국(입문 18급~명인·국수 기력 시스템, Depth 1~10 · Skill 0~20 적응형 난이도), 상차림 설정, 판편집, 기보 저장 및 복기를 지원합니다." />
   <meta name="theme-color" content="#0f131d" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1646,7 +1646,7 @@
     <header class="app-header">
       <div class="title-wrap">
         <span class="status-dot" id="engineDot" title="스톡피쉬 엔진 상태"></span>
-        <h1 class="app-title">나혼자 레벨업 장기</h1>
+        <h1 class="app-title">레벨업 장기</h1>
       </div>
 
       <div class="header-right">
@@ -1660,8 +1660,8 @@
       <div class="level-banner">
         <button class="level-step-btn" id="btnPrevLevel" onclick="changeLevel(-1)" title="이전 레벨로 낮추기">◀</button>
         <div class="level-badge-center" onclick="confirmResetLadder()" title="탭하여 기력(레벨) 초기화">
-          <div class="level-badge-title" id="levelBadgeTitle">🔥 E급 헌터 · 승급 시험 (보스전)</div>
-          <div class="level-badge-sub" id="levelBadgeSub">Depth 1 · Skill 20 · 이기면 D급 헌터로 승급!</div>
+          <div class="level-badge-title" id="levelBadgeTitle">🔥 입문 (18~10급) · 승급 시험</div>
+          <div class="level-badge-sub" id="levelBadgeSub">Depth 1 · Skill 20 · 이기면 중급 (9~5급)으로 승급!</div>
         </div>
         <button class="level-step-btn" id="btnNextLevel" onclick="changeLevel(1)" title="해금된 다음 레벨로 올리기">🔒</button>
       </div>
@@ -1935,23 +1935,23 @@
     </div>
   </div>
 
-  <!-- 10. 시스템 레벨업 & 수련 난이도 조정 팝업 모달 (Solo Leveling 시스템창 스타일) -->
+  <!-- 10. 시스템 승급 & 수련 난이도 조정 팝업 모달 -->
   <div class="modal-backdrop" id="levelUpModal" onclick="if(event.target===this) closeLevelUpModal()">
     <div class="modal-sheet system-modal-sheet" id="systemModalSheet">
       <div class="system-modal-header">
         <span class="system-tag" id="systemModalTag">SYSTEM NOTIFICATION</span>
-        <h3 class="system-title" id="lvlModalTitle">✨ [알림: 플레이어 레벨 상승]</h3>
+        <h3 class="system-title" id="lvlModalTitle">✨ [알림: 기력 승급]</h3>
       </div>
       <div class="system-body">
         <div class="system-win-badge" id="lvlModalWinBadge">🏆 외통수 승리!</div>
         <div class="system-rank-box" id="lvlModalRankBox">
-          <div class="system-rank-from" id="lvlModalFromRank">E급 헌터 · 승급 시험</div>
+          <div class="system-rank-from" id="lvlModalFromRank">입문 (18~10급) · 승급 시험</div>
           <div class="system-rank-arrow" id="lvlModalRankArrow">➔</div>
-          <div class="system-rank-to" id="lvlModalToRank">D급 헌터 · 승급 시험</div>
+          <div class="system-rank-to" id="lvlModalToRank">중급 (9~5급) · 승급 시험</div>
         </div>
         <div class="system-desc" id="lvlModalDesc">
-          축하합니다! 시련을 통과하여 다음 관문이 개방되었습니다.<br/>
-          스톡피쉬 Depth 2 보스전(Skill 20)에 즉시 도전할 수 있습니다!
+          축하합니다! 승급 시험을 통과하여 다음 기력 단계가 개방되었습니다.<br/>
+          스톡피쉬 Depth 2 승급 시험(Skill 20)에 즉시 도전할 수 있습니다!
         </div>
       </div>
       <div class="system-actions" id="lvlModalActions">
@@ -1976,10 +1976,10 @@
 
     // =========================================================================
     // 적응형 사다리 래더 규칙 (v2)
-    //  - Depth = 헌터 등급, Skill = 등급 내 숙련도 (Skill 20 = 승급 시험/보스전)
-    //  - 보스전 승리: 다음 Depth의 Skill 20으로 승급 / 그 외 승리: Skill +1 / 패배: Skill -1
+    //  - Depth = 기력 단계, Skill = 단계 내 숙련도 (Skill 20 = 승급 시험)
+    //  - 승급 시험 승리: 다음 Depth의 Skill 20으로 승급 / 그 외 승리: Skill +1 / 패배: Skill -1
     //  - Skill 바닥: Depth 1 = 0, Depth 2 이상 = 10 (바닥에서 패배 시 아래 Depth의 Skill 20으로 강등)
-    //  - 첫 대국 특례: 최초 E급 보스전(D1 S20) 패배 시 Skill 5로 배치
+    //  - 첫 대국 특례: 최초 입문 승급 시험(D1 S20) 패배 시 Skill 5로 배치
     //  - 실수 모드: Depth 1의 Skill 0~4에서 일정 확률로 무작위 합법수 착수
     // =========================================================================
     const LADDER_MIN_DEPTH = 1;
@@ -1990,9 +1990,17 @@
     const LADDER_PLACEMENT_SKILL = 5;    // 첫 대국 특례 배치 Skill
     const MISTAKE_RATE_BY_SKILL = { 0: 0.40, 1: 0.30, 2: 0.20, 3: 0.10, 4: 0.05 }; // Depth 1 전용
 
-    const HUNTER_TIERS = {
-      1: 'E급 헌터', 2: 'D급 헌터', 3: 'C급 헌터', 4: 'B급 헌터', 5: 'A급 헌터', 6: 'S급 헌터',
-      7: '국가권력급 Ⅰ', 8: '국가권력급 Ⅱ', 9: '국가권력급 Ⅲ', 10: '👑 그림자 군주'
+    const RANK_TIERS = {
+      1: '입문 (18~10급)',
+      2: '중급 (9~5급)',
+      3: '상급 (4~1급)',
+      4: '초단 (1단)',
+      5: '2~3단',
+      6: '4~5단',
+      7: '6~7단 (고수)',
+      8: '8단 (최고수)',
+      9: '9단 (프로급)',
+      10: '👑 명인 · 국수'
     };
 
     // 적응형 사다리 래더 상태 (첫 시작: Depth 1, Skill 20)
@@ -4382,14 +4390,14 @@
           ply: currentPly,
           side: mySide
         });
-        label = `나혼자 레벨업 장기 (${currentPly}/${moveHistory.length}수 국면 공유)`;
+        label = `레벨업 장기 (${currentPly}/${moveHistory.length}수 국면 공유)`;
       } else {
         url = buildShareUrl({
           fen: getBoardFen(),
           moves: [],
           side: mySide
         });
-        label = '나혼자 레벨업 장기 (현재 국면 공유)';
+        label = '레벨업 장기 (현재 국면 공유)';
       }
 
       copyTextToClipboard(url, '🔗 현재 국면 공유 링크가 복사되었습니다!');
@@ -4418,7 +4426,7 @@
       copyTextToClipboard(url, `🔗 '${item.title}' 기보 공유 링크가 복사되었습니다!`);
       if (navigator.share) {
         navigator.share({
-          title: `나혼자 레벨업 장기 기보 - ${item.title}`,
+          title: `레벨업 장기 기보 - ${item.title}`,
           text: `[기보 공유] ${item.title} (${uciList.length}수)`,
           url
         }).catch(() => {});
@@ -4587,8 +4595,8 @@
     // =========================================================================
     // 9. 스톡피쉬 WASM 엔진 연동 & 적응형 사다리 래더 시스템 (스마트 관문 & 수련)
     // =========================================================================
-    function getHunterTier(depth) {
-      return HUNTER_TIERS[depth] || HUNTER_TIERS[LADDER_MAX_DEPTH];
+    function getRankTier(depth) {
+      return RANK_TIERS[depth] || RANK_TIERS[LADDER_MAX_DEPTH];
     }
 
     function getFloorSkill(depth) {
@@ -4601,16 +4609,16 @@
     }
 
     function formatLadderLabel(depth, skill) {
-      const tier = getHunterTier(depth);
+      const tier = getRankTier(depth);
       if (skill === LADDER_BOSS_SKILL) {
-        return depth >= LADDER_MAX_DEPTH ? `${tier} · 최종 보스` : `${tier} · 승급 시험`;
+        return depth >= LADDER_MAX_DEPTH ? `${tier} · 최종 도전` : `${tier} · 승급 시험`;
       }
       return `${tier} · 숙련도 ${skill}/20`;
     }
 
     function getLadderRankInfo(depth, skill) {
       return {
-        tier: getHunterTier(depth),
+        tier: getRankTier(depth),
         isBoss: skill === LADDER_BOSS_SKILL,
         mistakeRate: getMistakeRate(depth, skill),
         label: formatLadderLabel(depth, skill)
@@ -4656,7 +4664,7 @@
         return `숙련도 ${LADDER_PLACEMENT_SKILL}`;
       }
       if (skill > getFloorSkill(depth)) return `${skill - 1}`;
-      if (depth > LADDER_MIN_DEPTH) return `${getHunterTier(depth - 1)} 강등`;
+      if (depth > LADDER_MIN_DEPTH) return `${getRankTier(depth - 1)} 강등`;
       return '유지';
     }
 
@@ -4673,8 +4681,8 @@
       if (titleEl) {
         if (info.isBoss) {
           titleEl.innerText = d >= LADDER_MAX_DEPTH
-            ? `👑 ${info.tier} · 최종 보스전`
-            : `🔥 ${info.tier} · 승급 시험 (보스전)`;
+            ? `👑 ${info.tier} · 최종 도전`
+            : `🔥 ${info.tier} · 승급 시험`;
         } else {
           titleEl.innerText = `💪 ${info.tier} · 숙련도 ${s}/20`;
         }
@@ -4682,7 +4690,7 @@
       if (subEl) {
         let sub;
         if (info.isBoss) {
-          const winText = d >= LADDER_MAX_DEPTH ? '이기면 그림자 군주 정복!' : `이기면 ${getHunterTier(d + 1)}로 승급!`;
+          const winText = d >= LADDER_MAX_DEPTH ? '이기면 명인 · 국수 등극!' : `이기면 ${getRankTier(d + 1)}로 승급!`;
           sub = `Depth ${d} · Skill ${s} · ${winText}`;
         } else {
           sub = `Depth ${d} · Skill ${s} · 승리 시 ${s + 1} / 패배 시 ${getLossPreviewText(d, s)}`;
@@ -4713,7 +4721,7 @@
         : getLadderStepDown(ladderState.depth, ladderState.skill);
       if (!step) return;
       if (delta > 0 && step.depth > ladderState.maxDepth) {
-        showToast('🔒 승급 시험(보스전)에서 승리하면 다음 등급이 해금됩니다!');
+        showToast('🔒 승급 시험에서 승리하면 다음 기력이 해금됩니다!');
         return;
       }
       ladderState.depth = step.depth;
@@ -4740,16 +4748,16 @@
         showToast('🔒 실전 대국 진행 중에는 등급을 초기화할 수 없습니다.');
         return;
       }
-      const msg = `⚠️ 헌터 등급을 완전 초기화하시겠습니까?\n\n` +
+      const msg = `⚠️ 기력 등급을 완전 초기화하시겠습니까?\n\n` +
         `· 현재 진행도: ${formatLadderLabel(ladderState.depth, ladderState.skill)} (Depth ${ladderState.depth} · Skill ${ladderState.skill})\n` +
-        `· 최고 해금 등급: ${getHunterTier(ladderState.maxDepth)}\n\n` +
-        `확인을 누르면 처음 관문인 E급 헌터 승급 시험 (Depth 1 · Skill 20)으로 즉시 리셋됩니다.`;
+        `· 최고 해금 기력: ${getRankTier(ladderState.maxDepth)}\n\n` +
+        `확인을 누르면 처음 관문인 입문 (18~10급) 승급 시험 (Depth 1 · Skill 20)으로 즉시 리셋됩니다.`;
       if (!confirm(msg)) return;
 
       resetLadderState();
       updateLevelUI();
       saveAutoState();
-      showToast('🔄 E급 헌터 승급 시험 (Depth 1 · Skill 20)으로 완전 초기화되었습니다!');
+      showToast('🔄 입문 (18~10급) 승급 시험 (Depth 1 · Skill 20)으로 완전 초기화되었습니다!');
     }
 
     function handlePlayerWinLevelUp(winnerLabel, winType = 'oetong', reason = '외통수') {
@@ -4766,20 +4774,20 @@
           if (ladderState.depth > ladderState.maxDepth) {
             ladderState.maxDepth = ladderState.depth;
           }
-          const newTier = getHunterTier(ladderState.depth);
+          const newTier = getRankTier(ladderState.depth);
           document.getElementById('statusText').innerText = `⚡ 승급! ${newTier} 승급 시험 직행!`;
           showToast(`🎊 ${prevInfo.tier} → ${newTier} 승급! 바로 다음 승급 시험에 도전합니다!`);
         } else {
           conquered = true;
-          document.getElementById('statusText').innerText = `👑 최강의 그림자 군주 정복!`;
-          showToast(`🏆 축하합니다! 최종 보스 그림자 군주를 꺾었습니다!`);
+          document.getElementById('statusText').innerText = `👑 최강의 명인 · 국수 등극!`;
+          showToast(`🏆 축하합니다! 최종 관문 명인 · 국수를 정복했습니다!`);
         }
       } else {
         // [2] 수련 승리 -> 숙련도 +1
         ladderState.skill = Math.min(LADDER_BOSS_SKILL, ladderState.skill + 1);
         if (ladderState.skill === LADDER_BOSS_SKILL) {
           document.getElementById('statusText').innerText = `🔥 ${prevInfo.tier} 승급 시험 도달!`;
-          showToast(`⚔️ 수련 완성! ${prevInfo.tier} 승급 시험(보스전)에 도전합니다!`);
+          showToast(`⚔️ 수련 완성! ${prevInfo.tier} 승급 시험에 도전합니다!`);
         } else {
           document.getElementById('statusText').innerText = `🎉 승리! 숙련도 ${prevInfo.skill} → ${ladderState.skill}`;
           showToast(`💪 수련 승리! ${prevInfo.tier} 숙련도 ${ladderState.skill}/20`);
@@ -4826,13 +4834,13 @@
       const engineDesc = `Depth ${newInfo.depth} · Skill ${newInfo.skill}`;
 
       if (conquered) {
-        if (titleEl) titleEl.innerText = '👑 [시스템 알림: 그림자 군주 정복]';
+        if (titleEl) titleEl.innerText = '👑 [시스템 알림: 명인 · 국수 등극]';
         if (descEl) {
-          descEl.innerHTML = scoreMsg + `최종 보스 <strong>그림자 군주</strong>를 꺾었습니다!<br/>` +
-            `<span style="color:#38bdf8;">더 이상 오를 등급이 없습니다. 언제든 다시 도전해 보세요.</span>`;
+          descEl.innerHTML = scoreMsg + `최종 관문 <strong>명인 · 국수</strong>를 정복했습니다!<br/>` +
+            `<span style="color:#38bdf8;">더 이상 오를 기력이 없습니다. 언제든 다시 도전해 보세요.</span>`;
         }
         if (nextBtn) {
-          nextBtn.innerText = '⚔️ 그림자 군주 재도전';
+          nextBtn.innerText = '⚔️ 명인 · 국수 재도전';
           nextBtn.onclick = startNextChallengeFromModal;
         }
       } else if (isBossWin) {
@@ -4849,7 +4857,7 @@
         if (titleEl) titleEl.innerText = '💪 [시스템 알림: 수련 성공 & 숙련도 상승]';
         if (descEl) {
           const nextMsg = newInfo.isBoss
-            ? `숙련도 20 달성! 이제 <strong>${newInfo.tier} 승급 시험(보스전)</strong>에 도전합니다.`
+            ? `숙련도 20 달성! 이제 <strong>${newInfo.tier} 승급 시험</strong>에 도전합니다.`
             : `숙련도가 <strong>${prevInfo.skill} → ${newInfo.skill}</strong>로 1 상승했습니다.`;
           descEl.innerHTML = scoreMsg + nextMsg + `<br/><span style="color:#ffd166;">다음 대국: ${engineDesc}</span>`;
         }
@@ -4903,12 +4911,12 @@
             `승리할 때마다 숙련도가 1씩 오르고, 숙련도 20에서 다시 승급 시험에 도전합니다.`;
         } else if (outcome === 'demote') {
           html = `숙련도 바닥(${LADDER_FLOOR_SKILL})에서 패배하여 <strong style="color:#ffd166;">${newInfo.tier}</strong>로 강등되었습니다.<br/>` +
-            `${newInfo.tier} 승급 시험(보스전)을 통과하면 다시 ${prevInfo.tier}로 복귀합니다.`;
+            `${newInfo.tier} 승급 시험을 통과하면 다시 ${prevInfo.tier}로 복귀합니다.`;
         } else if (outcome === 'down') {
           html = `숙련도가 <strong style="color:#ffd166;">${prevInfo.skill} → ${newInfo.skill}</strong>로 1 하락했습니다.<br/>` +
             `승리하면 다시 1씩 올라갑니다.`;
           if (newInfo.depth > LADDER_MIN_DEPTH && newInfo.skill === LADDER_FLOOR_SKILL) {
-            html += `<br/><span style="color:#f87171;">⚠️ 여기서 한 번 더 패배하면 ${getHunterTier(newInfo.depth - 1)}로 강등됩니다.</span>`;
+            html += `<br/><span style="color:#f87171;">⚠️ 여기서 한 번 더 패배하면 ${getRankTier(newInfo.depth - 1)}로 강등됩니다.</span>`;
           }
         } else {
           html = `현재 <strong style="color:#ffd166;">${newInfo.label}</strong>은(는) 가장 쉬운 단계입니다.<br/>` +
@@ -4966,10 +4974,10 @@
       let outcome;
 
       if (!ladderState.placementDone && d === LADDER_MIN_DEPTH && s === LADDER_BOSS_SKILL) {
-        // [0] 첫 대국 특례: 최초 E급 승급 시험에서 패배 -> 숙련도 5로 배치
+        // [0] 첫 대국 특례: 최초 입문 승급 시험에서 패배 -> 숙련도 5로 배치
         ladderState.skill = LADDER_PLACEMENT_SKILL;
         outcome = 'placement';
-        showToast(`📏 첫 기력 측정 완료: ${getHunterTier(d)} 숙련도 ${LADDER_PLACEMENT_SKILL}에서 수련을 시작합니다.`);
+        showToast(`📏 첫 기력 측정 완료: ${getRankTier(d)} 숙련도 ${LADDER_PLACEMENT_SKILL}에서 수련을 시작합니다.`);
       } else if (s > getFloorSkill(d)) {
         // [1] 숙련도 -1
         ladderState.skill = s - 1;
@@ -4980,9 +4988,9 @@
         ladderState.depth = d - 1;
         ladderState.skill = LADDER_BOSS_SKILL;
         outcome = 'demote';
-        showToast(`⬇️ ${getHunterTier(d)} → ${getHunterTier(d - 1)} 강등`);
+        showToast(`⬇️ ${getRankTier(d)} → ${getRankTier(d - 1)} 강등`);
       } else {
-        // [3] E급 최저 단계: 유지
+        // [3] 입문 최저 단계: 유지
         outcome = 'hold';
       }
       ladderState.placementDone = true;
