@@ -663,30 +663,10 @@
     }
 
     /* 4. 반응형 장기판 영역 (스마트폰 화면 폭에 100% 맞춤 & 세로 중앙 배치) */
-    .board-with-coords {
-      width: 100%;
-      margin: auto 0;
-      display: grid;
-      grid-template-columns: 18px 1fr;
-      grid-template-rows: auto 15px;
-      gap: 3px 4px;
-      align-items: stretch;
-    }
-
-    .board-rank-strip {
-      position: relative;
-      width: 18px;
-    }
-
-    .board-file-strip {
-      position: relative;
-      height: 15px;
-    }
-
     .board-container {
       width: 100%;
       aspect-ratio: 9 / 10;
-      margin: 0;
+      margin: auto 0;
       position: relative;
       background: #bb7e38 url('assets/janggi/JanggiWood.svg') no-repeat center / 100% 100%;
       border: 4px solid #5a3818;
@@ -755,26 +735,6 @@
       height: 100%;
       pointer-events: none;
       z-index: 30;
-    }
-
-    .board-coord-label {
-      position: absolute;
-      font-size: 11px;
-      font-weight: 800;
-      color: #cbd5e1;
-      pointer-events: none;
-      line-height: 1;
-      user-select: none;
-    }
-
-    .board-coord-label.rank {
-      right: 1px;
-      transform: translateY(-50%);
-    }
-
-    .board-coord-label.file {
-      top: 1px;
-      transform: translateX(-50%);
     }
 
     /* 장군 상태 궁 및 공격 기물 강조 */
@@ -1802,14 +1762,9 @@
       </div>
     </div>
 
-    <!-- 4. 장기판 (화면 세로 중앙 자동 배치 + 바깥 좌표) -->
-    <div class="board-with-coords">
-      <div class="board-rank-strip" id="boardRankStrip"></div>
-      <div class="board-container">
-        <div class="board-grid" id="boardGrid"></div>
-      </div>
-      <div></div>
-      <div class="board-file-strip" id="boardFileStrip"></div>
+    <!-- 4. 장기판 (화면 세로 중앙 자동 배치) -->
+    <div class="board-container">
+      <div class="board-grid" id="boardGrid"></div>
     </div>
 
     <!-- 5. 하단 컨트롤 바 (안 A: 상태줄 + 수순 탐색(연습전용) + 대국 제어) -->
@@ -2878,39 +2833,8 @@
         }
       }
 
-      renderBoardCoordinates();
-
       if (aiRecommendMove) {
         renderAiRecommendArrow(grid, aiRecommendMove);
-      }
-    }
-
-    function renderBoardCoordinates() {
-      const rankStrip = document.getElementById('boardRankStrip');
-      const fileStrip = document.getElementById('boardFileStrip');
-
-      if (rankStrip) {
-        rankStrip.innerHTML = '';
-        for (let sr = 0; sr < ROWS; sr++) {
-          const r = isFlipped ? (ROWS - 1 - sr) : sr;
-          const lbl = document.createElement('span');
-          lbl.className = 'board-coord-label rank';
-          lbl.style.top = `${((50 + sr * 100) / 1000) * 100}%`;
-          lbl.innerText = String(10 - r);
-          rankStrip.appendChild(lbl);
-        }
-      }
-
-      if (fileStrip) {
-        fileStrip.innerHTML = '';
-        for (let sc = 0; sc < COLS; sc++) {
-          const c = isFlipped ? (COLS - 1 - sc) : sc;
-          const lbl = document.createElement('span');
-          lbl.className = 'board-coord-label file';
-          lbl.style.left = `${((50 + sc * 100) / 900) * 100}%`;
-          lbl.innerText = FILES[c];
-          fileStrip.appendChild(lbl);
-        }
       }
     }
 
