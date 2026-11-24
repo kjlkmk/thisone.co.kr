@@ -4446,10 +4446,13 @@
         reconstructBoardAtPly(targetPly);
         gameState = moveHistory.length > 0 ? 'paused' : 'idle';
         updateAllUI();
+        saveAutoState();
 
-        try {
-          window.history.replaceState({}, document.title, window.location.pathname);
-        } catch (e) {}
+        if (window.crossOriginIsolated !== false) {
+          try {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch (e) {}
+        }
 
         setTimeout(() => {
           showToast(
