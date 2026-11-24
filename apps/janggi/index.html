@@ -387,6 +387,20 @@
       flex-shrink: 0;
     }
 
+    .mini-chip.manual-play {
+      background: rgba(16, 185, 129, 0.14);
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.42);
+      flex-shrink: 0;
+    }
+
+    .mini-chip.manual-play.active {
+      background: rgba(16, 185, 129, 0.34);
+      color: #ecfdf5;
+      border-color: #34d399;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+    }
+
     /* 연습모드 AI vs AI 설정 바 */
     .ai-vs-ai-bar {
       display: none;
@@ -1657,6 +1671,10 @@
           ♟️ <span id="practiceFormationSummary" style="overflow:hidden; text-overflow:ellipsis;">마상상마·마상상마</span> ▾
         </button>
 
+        <button class="mini-chip manual-play" id="btnToggleManualPlay" onclick="toggleManualPlayMode()" style="flex-shrink:0;" title="초·한 양쪽 기물을 모두 직접 수동으로 두어봅니다 (다시 누르면 AI 대국으로 전환)">
+          ✋ 수동
+        </button>
+
         <button class="mini-chip ai-vs-ai" id="btnToggleAiVsAi" onclick="toggleAiVsAiMode(true)" style="flex-shrink:0;" title="초 AI vs 한 AI 자동 대결 설정 열기">
           🤖⚔️ AI대결
         </button>
@@ -2008,6 +2026,7 @@
     let appMode = 'match';      // 'match'(실전 대국모드) | 'practice'(자유 연습모드)
     let isBoardEditing = false; // 연습모드 내 판편집 팔레트 활성화 여부
     let isAiVsAi = false;       // 연습모드 내 AI vs AI 자동 대결 활성화 여부
+    let isManualPlay = false;   // 연습모드 내 양쪽 수동 두어보기 활성화 여부
     let aiVsAiConfig = { choDepth: 3, choSkill: 20, hanDepth: 3, hanSkill: 20 };
     let hasAutoSavedCurrentMatch = false; // 현재 실전 대국 종료 시 기보 자동 저장 완료 여부
     let gameState = 'idle';     // 'idle' | 'playing' | 'paused' | 'ended'
@@ -2027,8 +2046,13 @@
       return appMode === 'practice' && !isBoardEditing && isAiVsAi;
     }
 
+    function isManualPlayActive() {
+      return appMode === 'practice' && !isBoardEditing && !isAiVsAi && isManualPlay;
+    }
+
     function isCurrentTurnAi() {
       if (isEditingBoardNow()) return false;
+      if (isManualPlayActive()) return false;
       if (isAiVsAiActive()) return true;
       return currentTurn !== mySide;
     }
@@ -2637,6 +2661,12 @@
       if (practiceSubRow) practiceSubRow.classList.toggle('hidden', isBoardEditing || isAiVsAi);
       if (aiVsAiBar) aiVsAiBar.classList.toggle('active', !isBoardEditing && isAiVsAi);
       if (editPanel) editPanel.classList.toggle('active', isBoardEditing);
+      const btnToggleManualPlay = document.getElementById('btnToggleManualPlay');
+      if (btnToggleManualPlay) {
+        const manualOn = isManualPlayActive();
+        btnToggleManualPlay.classList.toggle('active', manualOn);
+        btnToggleManualPlay.innerText = manualOn ? '✋ 수동ON' : '✋ 수동';
+      }
       syncAiVsAiSelectsUI();
 
       const navBar = document.getElementById('navBar');
@@ -2691,6 +2721,13 @@
         } else {
           statusEl.innerText = `🤖⚔️ ${gameState === 'playing' ? 'AI대결 중' : 'AI대결 대기'} · ${aiBattleTag}`;
         }
+      } else if (isManualPlayActive()) {
+        const checkInfo = findKingCheckInfo(board, currentTurn === 'b' ? 'cho' : 'han');
+        if (checkInfo.inCheck) {
+          statusEl.innerText = `🚨 [장군!] ✋ 수동두기 · ${turnName} 멍군 필요!`;
+        } else {
+          statusEl.innerText = `✋ 수동두기 · ${turnName} 차례 (양쪽 직접 착수)`;
+        }
       } else {
         const who = currentTurn === mySide ? '내 차례' : 'AI 차례';
         const checkInfo = findKingCheckInfo(board, currentTurn === 'b' ? 'cho' : 'han');
@@ -2716,9 +2753,17 @@
       document.getElementById('btnForward').disabled = currentPly >= moveHistory.length;
       document.getElementById('btnUndo').disabled = currentPly <= 0 || isAiThinking;
 
-      const myTeamName = mySide === 'b' ? 'cho' : 'han';
-      const inCheckNow = findKingCheckInfo(board, myTeamName).inCheck;
-      const passDisabled = isEditingBoardNow() || isAiVsAiActive() || gameState === 'ended' || isAiThinking || currentTurn !== mySide || inCheckNow;
+      const activeTeamName = isManualPlayActive()
+        ? (currentTurn === 'b' ? 'cho' : 'han')
+        : (mySide === 'b' ? 'cho' : 'han');
+      const inCheckNow = findKingCheckInfo(board, activeTeamName).inCheck;
+      const passDisabled =
+        isEditingBoardNow() ||
+        isAiVsAiActive() ||
+        gameState === 'ended' ||
+        isAiThinking ||
+        (!isManualPlayActive() && currentTurn !== mySide) ||
+        inCheckNow;
 
       const passBtn = document.getElementById('btnPass');
       if (passBtn) passBtn.disabled = passDisabled;
@@ -2729,16 +2774,22 @@
       if (gameState === 'playing') {
         if (isAiVsAiActive()) {
           startBtn.innerText = '⏸ 대결일시정지';
+        } else if (isManualPlayActive()) {
+          startBtn.innerText = '✋ 수동두기 중';
         } else {
           startBtn.innerText = appMode === 'match' ? '⚔️ 대국중' : '🧘 연습중';
         }
         startBtn.classList.add('playing');
       } else if (gameState === 'paused' || (currentPly > 0 && gameState !== 'ended')) {
-        startBtn.innerText = isAiVsAiActive() ? '▶ 대결이어보기' : '▶ 이어두기';
+        startBtn.innerText = isAiVsAiActive()
+          ? '▶ 대결이어보기'
+          : (isManualPlayActive() ? '✋ 수동 이어두기' : '▶ 이어두기');
         startBtn.classList.remove('playing');
       } else {
         if (isAiVsAiActive()) {
           startBtn.innerText = '▶ AI대결 시작';
+        } else if (isManualPlayActive()) {
+          startBtn.innerText = '✋ 수동두기';
         } else {
           startBtn.innerText = appMode === 'match' ? '▶ 게임시작' : '▶ 연습시작';
         }
@@ -3216,6 +3267,8 @@
         } else {
           scheduleAiMove(450);
         }
+      } else if (isManualPlayActive() && gameState === 'playing' && isAutoMoveEval && wasmReady) {
+        startMoveEvalForPly(currentPly, false);
       }
       return true;
     }
@@ -3230,7 +3283,7 @@
         showToast('AI 대결 중에는 수동 한수쉼을 사용할 수 없습니다.');
         return;
       }
-      if (isAiThinking || currentTurn !== mySide) {
+      if (isAiThinking || (!isManualPlayActive() && currentTurn !== mySide)) {
         showToast('내 차례에만 한수쉼을 할 수 있습니다.');
         return;
       }
@@ -3238,8 +3291,10 @@
         showToast('이미 종료된 대국입니다.');
         return;
       }
-      const myTeamName = mySide === 'b' ? 'cho' : 'han';
-      if (findKingCheckInfo(board, myTeamName).inCheck) {
+      const activeTeamName = isManualPlayActive()
+        ? (currentTurn === 'b' ? 'cho' : 'han')
+        : (mySide === 'b' ? 'cho' : 'han');
+      if (findKingCheckInfo(board, activeTeamName).inCheck) {
         playVoiceSound('janggun');
         showToast('🚨 [장군!] 궁이 위험할 때는 한수쉼을 할 수 없습니다!');
         return;
@@ -3510,6 +3565,10 @@
           pauseGame();
           return;
         }
+        if (isManualPlayActive()) {
+          showToast('✋ 수동두기 중입니다. 초·한 기물을 직접 움직여 보세요! (AI와 두려면 [✋ 수동ON] 해제)');
+          return;
+        }
         if (isCurrentTurnAi() && !isAiThinking) {
           scheduleAiMove(200);
         }
@@ -3523,7 +3582,9 @@
         showToast(
           appMode === 'match'
             ? '⚔️ 새 실전 대국이 시작되었습니다!'
-            : (isAiVsAiActive() ? '🤖⚔️ 새 AI 대결이 시작되었습니다!' : '🧘 새 연습 대국이 시작되었습니다!')
+            : (isAiVsAiActive()
+                ? '🤖⚔️ 새 AI 대결이 시작되었습니다!'
+                : (isManualPlayActive() ? '✋ 새 수동두기가 시작되었습니다!' : '🧘 새 연습 대국이 시작되었습니다!'))
         );
         if (isCurrentTurnAi()) {
           scheduleAiMove(300);
@@ -3539,10 +3600,14 @@
       updateAllUI();
       showToast(
         currentPly > 0
-          ? (isAiVsAiActive() ? '▶️ 현재 수순부터 AI 대결을 이어갑니다!' : '▶️ 현재 수순부터 대국을 이어갑니다!')
+          ? (isAiVsAiActive()
+              ? '▶️ 현재 수순부터 AI 대결을 이어갑니다!'
+              : (isManualPlayActive() ? '✋ 현재 수순부터 양쪽 수동으로 이어둡니다!' : '▶️ 현재 수순부터 대국을 이어갑니다!'))
           : (appMode === 'match'
               ? '⚔️ 실전 대국이 시작되었습니다!'
-              : (isAiVsAiActive() ? '🤖⚔️ AI끼리 대결이 시작되었습니다!' : '🧘 연습 대국이 시작되었습니다!'))
+              : (isAiVsAiActive()
+                  ? '🤖⚔️ AI끼리 대결이 시작되었습니다!'
+                  : (isManualPlayActive() ? '✋ 수동두기 시작! 초·한 기물을 직접 움직여 보세요.' : '🧘 연습 대국이 시작되었습니다!')))
       );
 
       if (isCurrentTurnAi()) {
@@ -3658,6 +3723,7 @@
         // 연습모드 -> 대국모드 복귀 시: 편집된 판이나 연습 국면이 랭크전에 영향을 주지 않도록 깨끗한 정식 상차림으로 초기화
         isBoardEditing = false;
         isAiVsAi = false;
+        isManualPlay = false;
         isAutoMoveEval = false;
         updateMoveEvalToggleUI();
         selectedCell = null;
@@ -3719,6 +3785,45 @@
       showToast(`🤖⚔️ 초(D${aiVsAiConfig.choDepth}·S${aiVsAiConfig.choSkill}) vs 한(D${aiVsAiConfig.hanDepth}·S${aiVsAiConfig.hanSkill}) 설정 적용!`);
     }
 
+    function toggleManualPlayMode(forceState) {
+      if (appMode !== 'practice') return;
+      stopAiThinking();
+      hidePvBanner();
+
+      const nextState = typeof forceState === 'boolean' ? forceState : !isManualPlay;
+      isManualPlay = nextState;
+      selectedCell = null;
+
+      if (isManualPlay) {
+        isAiVsAi = false;
+        if (isBoardEditing) {
+          isBoardEditing = false;
+          initialFen = getBoardFen();
+          moveHistory = [];
+          currentPly = 0;
+          lastMove = null;
+        }
+        if (gameState === 'idle' || gameState === 'paused') {
+          gameState = 'playing';
+        }
+        updateAllUI();
+        saveAutoState();
+        showToast('✋ 수동두기 ON! 초·한 양쪽 기물을 모두 직접 두어볼 수 있습니다. (해제 시 AI 대국 전환)');
+      } else {
+        if (gameState === 'idle' || gameState === 'paused') {
+          gameState = 'playing';
+        }
+        updateAllUI();
+        saveAutoState();
+        if (gameState !== 'ended' && isCurrentTurnAi()) {
+          showToast('🤖 AI 대국으로 전환! 현재 국면부터 스톡피쉬가 이어서 둡니다.');
+          scheduleAiMove(350);
+        } else {
+          showToast('🤖 AI 대국으로 전환! 현재 국면부터 착수하시면 스톡피쉬가 응수합니다.');
+        }
+      }
+    }
+
     function toggleAiVsAiMode(forceState) {
       if (appMode !== 'practice') return;
       stopAiThinking();
@@ -3729,6 +3834,7 @@
       selectedCell = null;
 
       if (isAiVsAi) {
+        isManualPlay = false;
         if (isBoardEditing) {
           isBoardEditing = false;
           initialFen = getBoardFen();
@@ -5623,6 +5729,7 @@
         const data = {
           appMode,
           isAiVsAi,
+          isManualPlay,
           aiVsAiConfig: { ...aiVsAiConfig },
           initialFen: initialFen || getBoardFen(),
           moveHistory,
@@ -5648,6 +5755,7 @@
         appMode = data.appMode === 'practice' ? 'practice' : 'match';
         isBoardEditing = false;
         isAiVsAi = appMode === 'practice' && Boolean(data.isAiVsAi);
+        isManualPlay = appMode === 'practice' && !isAiVsAi && Boolean(data.isManualPlay);
         if (data.aiVsAiConfig && typeof data.aiVsAiConfig === 'object') {
           aiVsAiConfig = {
             choDepth: Math.max(1, Math.min(15, Number(data.aiVsAiConfig.choDepth) || 3)),
